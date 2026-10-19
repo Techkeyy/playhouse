@@ -83,8 +83,12 @@ export async function fetchFreshMetadata(key) {
     const gateway = url.includes('/ipfs/') ? url.slice(0, url.indexOf('/ipfs/') + 6) : gateways[0];
     return normalizeMetadata(await fetchJson(url), key, gateway);
   });
-  if (process.env.OPENSEA_API_KEY) attempts.push(fetchOpenSea(key));
-  return { ...(await Promise.any(attempts)), tokenURI: uri };
+  try {
+    return { ...(await Promise.any(attempts)), tokenURI: uri };
+  } catch (gatewayError) {
+    if (!process.env.OPENSEA_API_KEY) throw gatewayError;
+    return { ...(await fetchOpenSea(key)), tokenURI: uri };
+  }
 }
 
 export async function resolveWithDurableFallback(tokenId, { readOwner, readFresh, readCached, writeCached, memory = new Map() }) {
