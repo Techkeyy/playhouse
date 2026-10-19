@@ -9,6 +9,8 @@
 3. Click **Challenge this Chog**. Move with WASD or arrow keys. Confirm the attack warnings are visible and that health, timer, and score change during a round.
 4. Finish or lose the round. Confirm the result and saved status appear. Select **Rematch** and confirm it starts a fresh round.
 5. Return to token 330, reload the page, select it again, and confirm your saved battle remains in Recent battles. Note the score and battle count before and after.
+6. Select the **third featured Chog**, token **1053** (CHOG #545). During its fight, check that its full NFT art moves as an arena sprite, its Aura changes the glow, and the boss reacts when it attacks or takes a hit. The art is a flat NFT image animated as a sprite, so it is not a separately rigged character cutout.
+7. Try to last past **15 seconds** and **30 seconds**. Note whether attack cadence and pattern density rise while warning paths remain readable. If you cannot reach those marks, record your longest run and whether the difficulty feels fair.
 
 ## 2. Arbitrary real token lookup
 
@@ -28,9 +30,10 @@ If you do not own or have authorized access to a Genesis NFT, mark this section 
 
 1. Open the live site on a phone or narrow browser viewport. Confirm roster, boss detail, buttons, and result are readable without horizontal clipping.
 2. Start a round and use pointer dragging. Confirm movement and attacks stay responsive and that the round can reach a result.
-3. Refresh after a saved round and check history. If the host takes time to wake, record how long it took and whether the retry UI worked.
-4. Open the [repository](https://github.com/Techkeyy/playhouse) and confirm its instructions correspond to the live product. Check that the demo video, once made, shows the same build.
-5. Metadata resilience: the authorized free OpenSea key expires **26 October 2026 at 09:32 UTC**, during judging. With the key unavailable, try a fresh token ID such as 335; direct onchain `tokenURI` plus IPFS should load it. Reload a previously loaded token such as 330 and confirm its profile still loads. Check that its **current owner** is read from Monad. A token never loaded before may fail if all IPFS gateways are unavailable, and a cached image URL may still fail to display; record either result honestly. Repeat this check after key expiry if possible.
+3. On a narrow phone screen, rotate to landscape and compare the arena size. On the roster page, scroll downward and check that sections reveal without hiding controls or causing horizontal scrolling. If your device uses reduced-motion settings, confirm decorative art motion stops while the attacks remain playable.
+4. Refresh after a saved round and check history. If the host takes time to wake, record how long it took and whether the retry UI worked.
+5. Open the [repository](https://github.com/Techkeyy/playhouse) and confirm its instructions correspond to the live product. Check that the demo video, once made, shows the same build.
+6. Metadata resilience: the authorized free OpenSea key expires **26 October 2026 at 09:32 UTC**, during judging. With the key unavailable, try a fresh token ID such as 335; direct onchain `tokenURI` plus IPFS should load it. Reload a previously loaded token such as 330 and confirm its profile still loads. Check that its **current owner** is read from Monad. A token never loaded before may fail if all IPFS gateways are unavailable, and a cached image URL may still fail to display; record either result honestly. Repeat this check after key expiry if possible.
 
 ## Results to fill in personally
 
@@ -39,10 +42,13 @@ If you do not own or have authorized access to a Genesis NFT, mark this section 
 | Desktop roster and token 330 details |  |  |
 | Desktop round, result, and rematch |  |  |
 | Saved history after refresh |  |  |
+| Token 1053 animated boss sprite |  |  |
+| Difficulty progression and readable warnings |  |  |
 | Custom lookup token 331 |  |  |
 | Another arbitrary token ID |  |  |
 | Genuine owner wallet settings |  |  |
 | Mobile layout and pointer play |  |  |
+| Scroll reveal and reduced-motion behavior |  |  |
 | Repository/video match live build |  |  |
 | Cached token after OpenSea key expiry/unavailability |  |  |
 
