@@ -8,12 +8,14 @@ if (existsSync('.env.local')) loadEnvFile('.env.local');
 export const CHOG_CONTRACT = '0xc96d31f8626c6d03fae5dcd3d61e3fb9f4a73763';
 export const CHAIN_ID = 143;
 const ABI = ['function name() view returns (string)', 'function ownerOf(uint256) view returns (address)', 'function tokenURI(uint256) view returns (string)'];
-const gateways = [
+const customGateway = process.env.IPFS_GATEWAY_URL;
+if (customGateway && !/^https:\/\/[^\s/]+(?:\/[^\s]*)?\/ipfs\/$/.test(customGateway)) throw new Error('IPFS_GATEWAY_URL must be an HTTPS URL ending in /ipfs/');
+const gateways = [...new Set([
+  customGateway,
   'https://gateway.pinata.cloud/ipfs/',
-  'https://dweb.link/ipfs/',
   'https://nftstorage.link/ipfs/',
   'https://ipfs.io/ipfs/'
-];
+].filter(Boolean))];
 
 const provider = new JsonRpcProvider(process.env.MONAD_RPC_URL || 'https://rpc.monad.xyz', CHAIN_ID, { staticNetwork: true });
 const contract = new Contract(CHOG_CONTRACT, ABI, provider);
@@ -75,7 +77,7 @@ export async function getOwner(tokenId) {
   return (await contract.ownerOf(BigInt(tokenId))).toLowerCase();
 }
 
-async function fetchFreshMetadata(key) {
+export async function fetchFreshMetadata(key) {
   const uri = await contract.tokenURI(BigInt(key));
   const attempts = gatewayUrls(uri).map(async url => {
     const gateway = url.includes('/ipfs/') ? url.slice(0, url.indexOf('/ipfs/') + 6) : gateways[0];

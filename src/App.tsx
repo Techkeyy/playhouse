@@ -20,7 +20,7 @@ function Arena({chog,onFinish}:{chog:Chog;onFinish:(g:GameState)=>void}){
      g.move.x=Number(held.has('arrowright')||held.has('d'))-Number(held.has('arrowleft')||held.has('a'));
      g.move.y=Number(held.has('arrowdown')||held.has('s'))-Number(held.has('arrowup')||held.has('w'));
      if(g.move.x||g.move.y)g.target=null;
-     advance(g,dt,chog.bossProfile.attackFamilies,chog.stats.level);drawGame(ctx,g,image.current,chog.bossProfile.arenaTheme);
+     advance(g,dt,chog.bossProfile.attackFamilies,chog.stats.level);drawGame(ctx,g,image.current,chog.bossProfile.arenaTheme,String(chog.traits.find(t=>t.trait_type.toLowerCase()==='aura')?.value||''),window.matchMedia('(prefers-reduced-motion: reduce)').matches);
      if(now-lastHud>100){lastHud=now;setHud({time:Math.max(0,Math.ceil((ROUND_MS-g.elapsed)/1000)),hp:g.hp,score:g.score,dodges:g.dodges});}
      if(g.done){callback.current({...g});return;}raf=requestAnimationFrame(tick);
    };raf=requestAnimationFrame(tick);
@@ -29,8 +29,9 @@ function Arena({chog,onFinish}:{chog:Chog;onFinish:(g:GameState)=>void}){
  const pointer=(e:React.PointerEvent<HTMLCanvasElement>)=>{const rect=e.currentTarget.getBoundingClientRect();state.current.target={x:(e.clientX-rect.left)/rect.width*WIDTH,y:(e.clientY-rect.top)/rect.height*HEIGHT};};
  return <section className="fight" aria-label={`Fight ${chog.name}`}>
    <div className="fight-head"><div><span className="eyebrow">LIVE ROUND</span><h2>{chog.name}</h2><p>{chog.bossProfile.title} · {chog.bossProfile.arenaTheme} arena</p></div><div className="hud"><span><b>{hud.time}</b> SEC</span><span><b>{'♥'.repeat(Math.max(0,hud.hp))}{'♡'.repeat(3-Math.max(0,hud.hp))}</b> HEALTH</span><span><b>{round(hud.score)}</b> SCORE</span></div></div>
+   <div className="fight-guide" aria-label="How to play"><span><strong>Move:</strong> arrows or WASD</span><span><strong>Touch:</strong> drag in the arena</span><span><strong>Dodge:</strong> warning shapes show where attacks will land</span><span><strong>Goal:</strong> survive 45 seconds</span></div>
    <canvas ref={canvas} width={WIDTH} height={HEIGHT} onPointerDown={e=>{e.currentTarget.setPointerCapture(e.pointerId);pointer(e);}} onPointerMove={e=>{if(e.buttons)pointer(e);}} onPointerUp={()=>{state.current.target=null;}} aria-label="Battle arena. Use arrow keys, WASD, or drag to dodge incoming attacks."/>
-   <div className="arena-foot"><span>Survive 45 seconds. Follow the warning lines, then dodge the attacks.</span><span>Near dodges: {hud.dodges}</span></div>
+   <div className="arena-foot"><span>Survive 45 seconds. Follow the warning lines, then dodge the attacks. On a phone, rotate to landscape for a larger arena.</span><span>Near dodges: {hud.dodges}</span></div>
  </section>;
 }
 
@@ -48,6 +49,7 @@ export default function App(){
  {stage==='select'&&<><section className="intro"><div><span className="eyebrow">REAL NFT BOSSES. REAL ARCADE ENERGY.</span><h1>Enter the <em>Playhouse.</em></h1><p>Every Chog is a boss with its own traits, attacks, and battle history. Pick one. Survive 45 seconds. Come back when it gets stronger.</p><div className="intro-meta"><span>01 / PICK A CHOG</span><span>02 / DODGE THE BOSS</span><span>03 / SET THE RECORD</span></div></div><div className="intro-art" aria-hidden="true"><div className="orbit orbit-a"></div><div className="orbit orbit-b"></div><span>45<span>SEC</span></span></div></section>
  <section className="roster-section"><div className="section-title"><div><span className="eyebrow">THE LINEUP</span><h2>Choose your challenger</h2></div><p>These bosses are built from real Chog Genesis tokens on Monad.</p></div>
  <form className="token-lookup" onSubmit={e=>void lookup(e)}><label htmlFor="token-id">Have a Chog? Enter its on-chain token ID</label><div><input id="token-id" inputMode="numeric" pattern="[0-9]*" placeholder="For example, 330" value={lookupId} onChange={e=>setLookupId(e.target.value)} /><button className="secondary" type="submit" disabled={lookupBusy}>{lookupBusy?'Finding Chog...':'Find my Chog'}</button></div><small>The NFT name number can differ from its on-chain token ID.</small>{lookupError&&<p className="owner-error" role="alert">{lookupError}</p>}</form>
+ <p className="roster-help">Anyone can play. Pick a Chog to preview its traits and attack style, then try to survive its 45-second fight. A wallet is only needed to tune a Chog you own.</p>
  {loading&&<div className="notice" role="status">Loading real Chogs from Monad...</div>}
  {!loading&&error&&<div className="notice error" role="alert">{error}<button onClick={()=>void loadRoster()}>Try again</button></div>}
  {!loading&&roster.length>0&&<div className="roster">{roster.map(chog=><button type="button" key={chog.tokenId} className={`chog-card ${selected?.tokenId===chog.tokenId?'active':''}`} onClick={()=>void select(chog)} aria-pressed={selected?.tokenId===chog.tokenId}><span className="card-image"><img src={chog.imageUrl} alt={chog.name} loading="lazy" onError={e=>{e.currentTarget.style.visibility='hidden';}}/></span><span className="card-body"><strong>{chog.name}</strong><small>Token ID {chog.tokenId} · Lv {chog.stats.level}</small><span>{chog.bossProfile.title}</span></span></button>)}</div>}

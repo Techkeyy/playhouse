@@ -30,7 +30,7 @@ If you do not own or have authorized access to a Genesis NFT, mark this section 
 2. Start a round and use pointer dragging. Confirm movement and attacks stay responsive and that the round can reach a result.
 3. Refresh after a saved round and check history. If the host takes time to wake, record how long it took and whether the retry UI worked.
 4. Open the [repository](https://github.com/Techkeyy/playhouse) and confirm its instructions correspond to the live product. Check that the demo video, once made, shows the same build.
-5. Metadata resilience: the authorized free OpenSea key expires **26 October 2026 at 09:32 UTC**, during judging. Reload a previously loaded token such as 330 while the key is unavailable and confirm its profile still loads from verified stored metadata. Check that its **current owner** is still read from Monad. A token never loaded before may fail if IPFS gateways are also unavailable, and a cached image URL may still fail to display; record either result honestly. Repeat this check after key expiry if possible.
+5. Metadata resilience: the authorized free OpenSea key expires **26 October 2026 at 09:32 UTC**, during judging. With the key unavailable, try a fresh token ID such as 335; direct onchain `tokenURI` plus IPFS should load it. Reload a previously loaded token such as 330 and confirm its profile still loads. Check that its **current owner** is read from Monad. A token never loaded before may fail if all IPFS gateways are unavailable, and a cached image URL may still fail to display; record either result honestly. Repeat this check after key expiry if possible.
 
 ## Results to fill in personally
 

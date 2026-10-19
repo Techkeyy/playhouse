@@ -6,3 +6,38 @@
 .owner-controls{display:flex;justify-content:space-between;align-items:center;gap:30px;margin:0 max(24px,5vw) 70px;padding:24px 28px;border:1px solid #3c6075;border-radius:14px;background:#182c3a}.owner-controls h3{font:25px 'Archivo Black';letter-spacing:-.04em;margin:7px 0}.owner-controls p{max-width:600px;margin:0;color:#b9cfda}.owner-controls .secondary{flex:none}.owner-edit{display:flex;align-items:center;gap:10px}.owner-edit label{font-size:13px;font-weight:800}.owner-edit select{min-height:48px;background:#0e2030;border:1px solid #6b8da0;border-radius:8px;color:#ecf6ff;padding:0 14px;font:inherit}.owner-controls .owner-error,.owner-controls .owner-success{margin:6px 0;max-width:300px;font-size:13px}.owner-error{color:#ffb9b5!important}.owner-success{color:#b3e8bf!important}@media(max-width:850px){.owner-controls{display:block}.owner-controls .secondary{margin-top:18px}.owner-edit{flex-wrap:wrap;margin-top:16px}}@media(max-width:650px){.owner-controls{margin:0 20px 45px;padding:20px}.owner-edit{display:grid}.owner-edit .secondary{margin-top:0}}
 .owner-line a{color:#f8d777;text-decoration:underline;text-underline-offset:3px}
 .token-lookup{display:grid;gap:9px;margin:0 0 24px;padding:19px 22px;background:#1b3040;border:1px solid #3f6176;border-radius:13px}.token-lookup label{font-size:15px;font-weight:800}.token-lookup>div{display:flex;gap:10px}.token-lookup input{width:min(260px,100%);min-height:50px;border:1px solid #7490a1;border-radius:8px;padding:0 14px;background:#0f2332;color:#edf7ff;font:inherit}.token-lookup input::placeholder{color:#aac0ce}.token-lookup small{color:#b9ceda;font-size:12px}.token-lookup .owner-error{margin:0}@media(max-width:650px){.token-lookup>div{display:grid}.token-lookup input{width:100%}}
+.roster-help{max-width:720px;margin:-8px 0 24px;color:#c4d9e5;font-size:15px}
+
+/* Keep the fight instructions beside the action, especially on touch screens. */
+.fight-guide{display:flex;flex-wrap:wrap;gap:8px;margin:0 0 12px;padding:10px 12px;border:1px solid #4a7086;border-radius:10px;background:#1b3040;color:#dcebf3;font-size:13px;line-height:1.4}
+.fight-guide span{display:inline-flex;align-items:center;gap:6px;padding:5px 9px;border-radius:7px;background:#274457}
+.fight-guide strong{color:#f8d777}
+
+/* A little life for the collectible art without moving controls or text. */
+.card-image img{transition:transform .25s ease,filter .25s ease}
+.chog-card:hover .card-image img,.chog-card:focus-visible .card-image img{transform:scale(1.045);filter:drop-shadow(0 10px 12px rgba(4,13,23,.35))}
+.detail-art img{animation:chog-float 5s ease-in-out infinite}
+@keyframes chog-float{0%,100%{transform:translateY(0)}50%{transform:translateY(-6px)}}
+
+@media(max-width:650px){
+  .site-head{padding-inline:16px;gap:10px}
+  .brand{min-width:0;gap:8px;font-size:17px}
+  .brand-mark{width:32px;height:32px;flex:none}
+  .head-link{flex:none;font-size:10px;letter-spacing:.08em}
+  .intro h1{overflow-wrap:anywhere}
+  .stat-row{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
+  .stat-row div{min-width:0}
+  .stat-row b{font-size:clamp(17px,5.5vw,24px);overflow-wrap:anywhere}
+  .owner-controls{min-width:0;overflow-wrap:anywhere}
+  .owner-edit{min-width:0}
+  .owner-edit select{min-width:0;max-width:100%;width:100%}
+  .fight-guide{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:6px;font-size:12px}
+  .fight-guide span{min-width:0;padding:6px 8px}
+  .fight-head h2{overflow-wrap:anywhere}
+  .hud{gap:6px}
+  .hud span{min-width:0;padding:8px 7px}
+  .hud b{font-size:clamp(16px,5vw,22px)}
+  .result-actions .primary,.result-actions .secondary{width:100%}
+}
+@media(max-width:400px){.fight-guide{grid-template-columns:1fr}.brand{font-size:15px}.head-link{font-size:9px}}
+@media(prefers-reduced-motion:reduce){.detail-art img{animation:none}.card-image img{transition:none}.chog-card:hover .card-image img,.chog-card:focus-visible .card-image img{transform:none}}
