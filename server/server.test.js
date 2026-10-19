@@ -22,6 +22,47 @@ test('real-shape traits produce deterministic distinct boss rules', () => {
   assert.match(makeBossProfile(traits, { level: 2 }).evolutionHint, /Level 2/);
 });
 
+test('observed featured NFT traits yield three different named signatures', () => {
+  const observed = [
+    { id: '330', traits: { Head: 'Dollar Cap', Aura: 'Yellow Aura', Eyes: 'Gradient visor', Background: 'Light Magenta' }, signature: 'coin-rain', family: 'falling' },
+    { id: '1538', traits: { Head: 'Balls Cap', Body: 'Inmate', Eyes: 'Round Eye', Background: 'Soft Lavender' }, signature: 'cell-bars', family: 'sweep' },
+    { id: '1053', traits: { Head: 'MMGA Cap', Aura: 'Light Purple', Eyes: 'Happy', Background: 'Fresh Green' }, signature: 'rally-orbit', family: 'orbit' }
+  ];
+  for (const sample of observed) {
+    const traits = Object.entries(sample.traits).map(([trait_type, value]) => ({ trait_type, value }));
+    const profile = makeBossProfile(traits);
+    assert.equal(profile.signature.id, sample.signature, sample.id);
+    assert.equal(profile.signature.family, sample.family, sample.id);
+    assert.equal(profile.attackFamilies[0], sample.family, sample.id);
+    assert.ok(profile.signature.source.includes(':'), sample.id);
+    assert.ok(profile.signature.description.length > 30, sample.id);
+    const alternate = profile.attackFamilies[1];
+    const customized = makeBossProfile(traits, {}, { preferredAttack: alternate });
+    assert.equal(customized.attackFamilies[0], alternate, sample.id);
+    assert.ok(customized.attackFamilies.includes(profile.signature.family), sample.id);
+  }
+});
+
+test('ordinary trait variants select inspectable motifs without token ID or random hash', () => {
+  const cases = [
+    [{ Head: 'Wizard Hat', Aura: 'Fire' }, 'spell-orbit', 'orbit', 'Head: Wizard Hat'],
+    [{ Head: 'Russian Hat', Aura: 'Fire' }, 'frost-sweep', 'sweep', 'Head: Russian Hat'],
+    [{ Head: 'Buttcoin Cap' }, 'token-rain', 'falling', 'Head: Buttcoin Cap'],
+    [{ Head: 'Plain Cap', Eyes: 'Sleepy' }, 'headwear-burst', 'pulse', 'Head: Plain Cap'],
+    [{ Body: 'Stripes' }, 'stripe-sweep', 'sweep', 'Body: Stripes'],
+    [{ Eyes: 'Round Eye' }, 'round-gaze', 'orbit', 'Eyes: Round Eye']
+  ];
+  const signatures = cases.map(([values, id, family, source]) => {
+    const traits = Object.entries(values).map(([trait_type, value]) => ({ trait_type, value }));
+    const signature = makeBossProfile(traits).signature;
+    assert.equal(signature.id, id);
+    assert.equal(signature.family, family);
+    assert.equal(signature.source, source);
+    return signature;
+  });
+  assert.equal(new Set(signatures.map(s => s.family)).size, 4);
+});
+
 test('metadata validation rejects blank or invented NFT data', () => {
   const good = normalizeMetadata({ name: 'CHOG #1791', image: 'ipfs://bafytest/image.png', attributes: [{ trait_type: 'Head', value: 'Wizard Hat' }] }, '330', 'https://dweb.link/ipfs/');
   assert.equal(good.imageUrl, 'https://dweb.link/ipfs/bafytest/image.png');

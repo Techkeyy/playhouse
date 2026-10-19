@@ -1,7 +1,7 @@
 export type Trait = {trait_type:string; value:string | number};
 export type Chog = {
   tokenId:string; name:string; imageUrl:string; traits:Trait[]; owner:string;
-  bossProfile:{title:string; attackFamilies:string[]; arenaTheme:string; evolutionHint:string};
+  bossProfile:{title:string; attackFamilies:string[]; arenaTheme:string; evolutionHint:string; signature?:{id:string;family:string;name:string;source:string;description:string}};
   stats:{battles:number;wins:number;losses:number;bestScore:number;level:number};
 };
 export type BattleSummary = {id?:string;tokenId:string;score:number;survived:boolean;durationMs:number;hits:number;dodges:number;createdAt?:string};

@@ -10,7 +10,7 @@
     "build": "tsc -b && vite build --configLoader runner",
     "preview": "vite preview --host 0.0.0.0",
     "check": "tsc --noEmit",
-    "test": "node --experimental-strip-types --test src/game.test.mjs server/server.test.js"
+    "test": "node --experimental-strip-types --test src/game.test.mjs src/audio.test.mjs server/server.test.js"
   },
   "dependencies": {
     "ethers": "^6.15.0",

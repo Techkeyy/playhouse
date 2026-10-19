@@ -61,3 +61,32 @@ test('arena draws the full NFT image as a character sprite without cropping',()=
  assert.ok(calls.some(call=>call[0]==='drawImage'&&call[1]===nft&&call[2]===-69&&call[3]===-69&&call[4]===138&&call[5]===138));
  assert.equal(calls.some(call=>call[0]==='clip'),false);
 });
+
+test('featured trait signatures change attack geometry, timing, and symbols',()=>{
+ const launch=(family,signature)=>{const g=newGame();for(let i=0;i<20;i++)advance(g,50,[family],1,signature);return g;};
+ const coin=launch('falling','coin-rain'),cell=launch('sweep','cell-bars'),rally=launch('orbit','rally-orbit');
+ assert.equal(coin.lastMotif,'coin-rain');
+ assert.equal(cell.lastMotif,'cell-bars');
+ assert.equal(rally.lastMotif,'rally-orbit');
+ assert.equal(coin.shots.length,5);
+ assert.ok(new Set(coin.shots.map(s=>s.age)).size>1,'coin columns should cascade');
+ assert.ok(cell.shots.some(s=>s.vx>0)&&cell.shots.some(s=>s.vx<0),'cell bars should enter from both sides');
+ assert.equal(rally.shots.length,7);
+ const calls=[];const ctx=new Proxy({canvas:{width:900,height:500},createLinearGradient:()=>({addColorStop:()=>{}})}, {get(target,key){return key in target?target[key]:(...args)=>{calls.push([key,...args]);};},set(target,key,value){target[key]=value;return true;}});
+ for(const g of [coin,cell,rally]){for(const shot of g.shots)shot.age=shot.telegraph+1;drawGame(ctx,g,null,'Light Magenta','Yellow Aura',true,g.lastMotif);}
+ assert.ok(calls.some(c=>c[0]==='fillText'&&c[1]==='$'),'coin rain should show coin symbols');
+ assert.ok(calls.some(c=>c[0]==='closePath'),'rally orbit should draw stars');
+});
+
+test('nonfeatured semantic signatures keep four distinct attack mechanics',()=>{
+ const cases=[['spell-orbit','orbit'],['frost-sweep','sweep'],['token-rain','falling'],['headwear-burst','pulse']];
+ const shapes=new Set();
+ for(const [signature,family] of cases){
+   const g=newGame();for(let i=0;i<20;i++)advance(g,50,[family],1,signature);
+   assert.equal(g.lastMotif,signature);
+   assert.ok(g.shots.length>0);
+   shapes.add(g.shots.map(s=>`${Math.sign(s.vx)},${Math.sign(s.vy)},${Math.round(s.r)},${Math.round(s.age)}`).join('|'));
+ }
+ assert.equal(shapes.size,4);
+ assert.ok(spawnCadence(0,1)<900,'a new boss should apply pressure from the opening phase');
+});
