@@ -1,0 +1,8 @@
+node_modules/
+.npm-cache/
+dist/
+*.tsbuildinfo
+data/*.sqlite*
+server/data/*.sqlite*
+.env*
+!.env.example
