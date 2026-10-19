@@ -5,12 +5,12 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { Wallet } from 'ethers';
 import { makeBossProfile, validateResult } from './rules.js';
-import { normalizeMetadata } from './chain.js';
 
 const directory = mkdtempSync(join(tmpdir(), 'playhouse-test-'));
 delete process.env.DATABASE_URL;
 process.env.PLAYHOUSE_DB_PATH = join(directory, 'test.sqlite');
-const { closeStore, saveBattle, statsFor, historyFor, startBattle, finishBattle } = await import('./store.js');
+const { closeStore, saveBattle, statsFor, historyFor, startBattle, finishBattle, saveMetadata, getCachedMetadata } = await import('./store.js');
+const { normalizeMetadata, resolveWithDurableFallback } = await import('./chain.js');
 const { issueChallenge, verifyChallenge, requireOwner } = await import('./auth.js');
 
 test('real-shape traits produce deterministic distinct boss rules', () => {
@@ -27,6 +27,19 @@ test('metadata validation rejects blank or invented NFT data', () => {
   assert.equal(good.imageUrl, 'https://dweb.link/ipfs/bafytest/image.png');
   assert.equal(good.tokenId, '330');
   assert.throws(() => normalizeMetadata({ name: 'CHOG', image: 'x', attributes: [] }, '330'), /image/);
+});
+
+test('validated metadata survives provider failure while owner is refreshed', async () => {
+  let currentOwner = '0x1111111111111111111111111111111111111111';
+  const deps = { readOwner: async () => currentOwner, readFresh: async () => ({ tokenId: '330', name: 'CHOG #1791', imageUrl: 'https://example.com/chog.webp', traits: [{ trait_type: 'Head', value: 'Wizard Hat' }], tokenURI: 'ipfs://bafyverified/1791.json' }), readCached: getCachedMetadata, writeCached: saveMetadata, memory: new Map() };
+  const first = await resolveWithDurableFallback('330', deps);
+  assert.equal(first.owner, currentOwner);
+  assert.equal((await getCachedMetadata('330')).name, 'CHOG #1791');
+  currentOwner = '0x2222222222222222222222222222222222222222';
+  const afterOutage = await resolveWithDurableFallback('330', { ...deps, readFresh: async () => { throw new Error('providers unavailable'); }, memory: new Map() });
+  assert.equal(afterOutage.name, 'CHOG #1791');
+  assert.equal(afterOutage.owner, currentOwner);
+  await assert.rejects(resolveWithDurableFallback('330', { ...deps, readOwner: async () => { throw new Error('ownerOf failed'); }, readFresh: async () => { throw new Error('providers unavailable'); }, memory: new Map() }), /ownerOf failed/);
 });
 
 test('battle records persist and level derives from token history', async () => {

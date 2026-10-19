@@ -1,6 +1,7 @@
 import { Contract, JsonRpcProvider } from 'ethers';
 import { existsSync } from 'node:fs';
 import { loadEnvFile } from 'node:process';
+import { getCachedMetadata, saveMetadata } from './store.js';
 
 if (existsSync('.env.local')) loadEnvFile('.env.local');
 
@@ -74,24 +75,41 @@ export async function getOwner(tokenId) {
   return (await contract.ownerOf(BigInt(tokenId))).toLowerCase();
 }
 
-export async function getChogMetadata(tokenId) {
-  const key = String(tokenId);
-  const existing = cache.get(key);
-  if (existing && existing.expires > Date.now()) return { ...existing.data, owner: await getOwner(key) };
-  const [owner, uri] = await Promise.all([getOwner(key), contract.tokenURI(BigInt(key))]);
+async function fetchFreshMetadata(key) {
+  const uri = await contract.tokenURI(BigInt(key));
   const attempts = gatewayUrls(uri).map(async url => {
     const gateway = url.includes('/ipfs/') ? url.slice(0, url.indexOf('/ipfs/') + 6) : gateways[0];
     return normalizeMetadata(await fetchJson(url), key, gateway);
   });
   if (process.env.OPENSEA_API_KEY) attempts.push(fetchOpenSea(key));
+  return { ...(await Promise.any(attempts)), tokenURI: uri };
+}
+
+export async function resolveWithDurableFallback(tokenId, { readOwner, readFresh, readCached, writeCached, memory = new Map() }) {
+  const key = String(tokenId);
+  const owner = (await readOwner(key)).toLowerCase(); // Never cache ownership; transfer must take effect immediately.
+  const existing = memory.get(key);
+  if (existing && existing.expires > Date.now()) return { ...existing.data, owner };
+  let data;
   try {
-    const data = await Promise.any(attempts);
-    const result = { ...data, owner, tokenURI: uri };
-    cache.set(key, { data: result, expires: Date.now() + 15 * 60_000 });
-    return result;
+    data = await readFresh(key);
+    const normalized = normalizeMetadata({ name: data.name, image: data.imageUrl, attributes: data.traits }, key);
+    if (typeof data.tokenURI !== 'string' || !/^(ipfs:\/\/|https:\/\/)/.test(data.tokenURI)) throw new Error('Invalid tokenURI');
+    data = { ...normalized, tokenURI: data.tokenURI };
+    try { await writeCached(data); } catch (error) { console.error('Could not persist validated Chog metadata:', error.message); }
   } catch {
-    throw new Error(`Chog metadata unavailable for token ${key}`);
+    const cached = await readCached(key);
+    if (!cached || cached.tokenId !== key || typeof cached.tokenURI !== 'string' || !/^(ipfs:\/\/|https:\/\/)/.test(cached.tokenURI)) throw new Error(`Chog metadata unavailable for token ${key}`);
+    const normalized = normalizeMetadata({ name: cached.name, image: cached.imageUrl, attributes: cached.traits }, key);
+    data = { ...normalized, tokenURI: cached.tokenURI };
   }
+  const result = { ...data, owner };
+  memory.set(key, { data, expires: Date.now() + 15 * 60_000 });
+  return result;
+}
+
+export async function getChogMetadata(tokenId) {
+  return resolveWithDurableFallback(tokenId, { readOwner: getOwner, readFresh: fetchFreshMetadata, readCached: getCachedMetadata, writeCached: saveMetadata, memory: cache });
 }
 
 export async function doctor() {

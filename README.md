@@ -2,9 +2,11 @@
 
 **Challenge a real Chog Genesis NFT as an arcade boss.** Anyone can choose a Chog and try to survive a 45-second dodge round. The boss draws its identity and traits from its Monad NFT; completed rounds contribute to a per-token battle record.
 
+**[Play the live game](https://playhouse-chogathon.onrender.com/)** · **[Source code](https://github.com/Techkeyy/playhouse)**
+
 Built for [Chogathon 2026](https://chogathon.chog.xyz/). The event requires Chog NFTs to be essential, and judges novelty (30%), fun (20%), retention (20%), clarity (15%), and execution (15%).
 
-**Current verification status:** local type check, build, **3 game tests and 6 server tests** pass. Live API checks loaded token **330** from mainnet, started and saved a battle, retried the save idempotently, and read its history. A signed nonowner was rejected by the ownership check. A local rendered browser run played token 330, showed its saved history after refresh, and looked up nonfeatured token 331. **Production deployment and deployed browser UAT remain pending**, as does a real-holder test. No live-site or demo-video link is claimed here yet.
+**Current verification status:** local type check, build, **3 game tests and 6 server tests** pass. The deployed browser loaded six real Chogs, played token **330** (CHOG #1791), saved a 636-point battle, and showed that result after reload. A custom lookup loaded token **331** (CHOG #1792). Production health reported PostgreSQL storage, and battle ID 4 survived a redeploy. A signed nonowner was rejected by the ownership check. **A real Genesis holder has not tested owner controls.** A demo video is still pending.
 
 ## Why this exists
 
@@ -14,7 +16,7 @@ The [Chog site](https://www.chog.xyz/) already has a PFP maker, meme maker, snap
 
 ## What it does
 
-1. **Loads** featured Chog Genesis tokens from the Monad mainnet contract. The API reads `ownerOf` and `tokenURI`, then fetches NFT metadata and traits from IPFS gateways or an optional OpenSea API fallback. A live probe verified token **330** as **CHOG #1791**, with 12 traits and an onchain owner; local browser testing also loaded nonfeatured token **331**.
+1. **Loads** featured Chog Genesis tokens from the Monad mainnet contract. The API reads `ownerOf` and `tokenURI`, then fetches NFT metadata and traits from IPFS gateways or an optional OpenSea API fallback. Production browser testing loaded token **330** as **CHOG #1791**, with 12 traits and an onchain owner, and also loaded nonfeatured token **331**.
 2. **Builds** a boss profile from those traits using deterministic rules, including attack families and a title.
 3. **Runs** a 45-second canvas survival round with keyboard or pointer controls, warning telegraphs, hit points, and a score.
 4. **Records** the result in battle history keyed by the onchain token ID, using local SQLite or PostgreSQL when `DATABASE_URL` is set. The number of recorded battles raises the boss level, which changes attack speed.
@@ -51,9 +53,9 @@ The API reads a local `.env.local` file if present. It is ignored by Git. The fo
 | Variable | Default | Use |
 | --- | --- | --- |
 | `MONAD_RPC_URL` | `https://rpc.monad.xyz` | Monad mainnet JSON-RPC endpoint. |
-| `OPENSEA_API_KEY` | unset | Optional server-side metadata fallback when IPFS gateways are unavailable. Do not expose it to Vite or commit it. |
+| `OPENSEA_API_KEY` | unset | Optional server-side metadata fallback when IPFS gateways are unavailable. The authorized free key used for this build expires **26 October 2026 at 09:32 UTC**, during judging. Do not expose it to Vite or commit it. |
 | `PORT` | `8787` | API listen port. Vite's proxy is fixed to 8787 unless `vite.config.ts` is updated. |
-| `PLAYHOUSE_DB_PATH` | `data/playhouse.sqlite` | Path for the SQLite database. Use persistent storage in deployment. |
+| `PLAYHOUSE_DB_PATH` | `data/playhouse.sqlite` | Local SQLite file path when `DATABASE_URL` is unset. |
 | `DATABASE_URL` | unset | PostgreSQL connection URL. When set, the API uses PostgreSQL instead of local SQLite; intended for durable Render storage. |
 | `PLAYHOUSE_APP_ORIGIN` | `http://localhost:5173` | Expected frontend origin included in the signed owner challenge. Set it to the deployed app origin. |
 | `NODE_ENV` | unset | Set to `production` to disable the development doctor endpoint. |
@@ -69,7 +71,7 @@ node --test server/server.test.js
 npm run build
 ```
 
-The last recorded runs passed **3 game tests** and **6 server tests**; `npm run check` and `npm run build` also passed. Re-run these commands after any changes. The server tests cover rules, metadata validation, battle history/evolution, one-use battle sessions and idempotent retry, and wallet signature/ownership-transfer simulation. The PostgreSQL path still needs a real hosted `DATABASE_URL` test; these tests are not a real Genesis holder test.
+The last recorded runs passed **3 game tests** and **6 server tests**; `npm run check` and `npm run build` also passed. Re-run these commands after any changes. The server tests cover rules, metadata validation, battle history/evolution, one-use battle sessions and idempotent retry, and wallet signature/ownership-transfer simulation. The deployed PostgreSQL health check and a saved battle surviving redeploy were verified; these checks are not a real Genesis holder test.
 
 ## Try the player flow
 
@@ -83,7 +85,7 @@ If the roster cannot load, inspect `/api/doctor`, RPC connectivity, and metadata
 
 The owner journey is separate from open play. For a real Genesis holder: connect the wallet that currently owns the selected token, request a challenge, sign the exact message, choose one of that boss's permitted attacks, and save it. A fresh `ownerOf` read at the protected write must reject a nonowner or a previous owner after transfer. We do not own or borrow a Genesis NFT; controlled NFT and local-chain tests can verify the logic, but cannot substitute for a real-holder mainnet UAT.
 
-The API routes are `POST /api/auth/challenge`, `POST /api/auth/verify`, and `POST /api/chogs/:tokenId/settings`. Their browser UI and automated test coverage must be checked against the final build before submission.
+The API routes are `POST /api/auth/challenge`, `POST /api/auth/verify`, and `POST /api/chogs/:tokenId/settings`. The browser owner controls exist, and tests cover authentication and simulated ownership transfer. A real Genesis holder has not exercised the complete production flow.
 
 ## Architecture
 
@@ -106,9 +108,9 @@ The API routes are `POST /api/auth/challenge`, `POST /api/auth/verify`, and `POS
 - Owner authentication currently uses EOA `personal_sign`; smart contract wallets are not covered by the tested flow.
 - Boss evolution currently means a level increase after every three recorded battles and a faster attack cadence. It is deterministic and is not machine learning.
 - Mainnet owner controls are designed around the real Genesis contract, but the team has no Genesis NFT and cannot claim a completed real-holder production test unless a holder actually participates.
-- Metadata and artwork depend on Monad RPC and external IPFS gateways or the optional OpenSea API fallback. Direct gateway fetching was blocked in the development environment, but a live OpenSea-backed metadata probe succeeded. The roster may still fail if all sources are unavailable.
-- The API is a separate Node process. It uses local SQLite by default, and PostgreSQL with `DATABASE_URL`. The PostgreSQL branch awaits a test against a hosted database.
-- Local rendered browser UAT passed for a nonholder round and history refresh. Production deployment and deployed browser UAT have not yet completed. Claims about a reachable live game and real-holder use must wait for that evidence.
+- The authorized free OpenSea key expires **26 October 2026 at 09:32 UTC**, during judging; it is not a permanent dependency. The backend now has a durable cache of previously verified token metadata (name, image URL, traits, token URI) in the database. That can keep **previously loaded tokens** available if OpenSea and IPFS metadata fetches fail. It does not discover an uncached token, guarantee that its image URL still serves artwork, or replace the live Monad `ownerOf` read used for ownership and controls. This cache fallback still needs verification after deployment and after key expiry.
+- The API uses local SQLite by default and PostgreSQL with `DATABASE_URL`. Production PostgreSQL health and a battle surviving redeploy were checked; long-term durability under load has not been tested.
+- Deployed nonholder browser UAT passed for a round, save, history refresh, and custom token lookup. A real Genesis holder has not completed owner-control UAT.
 
 ## Sources and disclosure
 

@@ -17,7 +17,8 @@ export const ready = (async () => {
       CREATE TABLE IF NOT EXISTS owner_settings(token_id TEXT PRIMARY KEY, preferred_attack TEXT, updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP);
       CREATE TABLE IF NOT EXISTS auth_challenges(nonce TEXT PRIMARY KEY, address TEXT NOT NULL, token_id TEXT NOT NULL, expires_at BIGINT NOT NULL);
       CREATE TABLE IF NOT EXISTS sessions(token TEXT PRIMARY KEY, address TEXT NOT NULL, token_id TEXT NOT NULL, expires_at BIGINT NOT NULL);
-      CREATE TABLE IF NOT EXISTS battle_sessions(id TEXT PRIMARY KEY, token_id TEXT NOT NULL, started_at BIGINT NOT NULL, completed INTEGER NOT NULL DEFAULT 0, battle_id BIGINT);`);
+      CREATE TABLE IF NOT EXISTS battle_sessions(id TEXT PRIMARY KEY, token_id TEXT NOT NULL, started_at BIGINT NOT NULL, completed INTEGER NOT NULL DEFAULT 0, battle_id BIGINT);
+      CREATE TABLE IF NOT EXISTS chog_metadata(token_id TEXT PRIMARY KEY, name TEXT NOT NULL, image_url TEXT NOT NULL, traits_json TEXT NOT NULL, token_uri TEXT NOT NULL, fetched_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP);`);
   } else {
     const path = resolve(process.env.PLAYHOUSE_DB_PATH || 'data/playhouse.sqlite');
     mkdirSync(dirname(path), { recursive: true });
@@ -28,7 +29,8 @@ export const ready = (async () => {
       CREATE TABLE IF NOT EXISTS owner_settings(token_id TEXT PRIMARY KEY, preferred_attack TEXT, updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP);
       CREATE TABLE IF NOT EXISTS auth_challenges(nonce TEXT PRIMARY KEY, address TEXT NOT NULL, token_id TEXT NOT NULL, expires_at INTEGER NOT NULL);
       CREATE TABLE IF NOT EXISTS sessions(token TEXT PRIMARY KEY, address TEXT NOT NULL, token_id TEXT NOT NULL, expires_at INTEGER NOT NULL);
-      CREATE TABLE IF NOT EXISTS battle_sessions(id TEXT PRIMARY KEY, token_id TEXT NOT NULL, started_at INTEGER NOT NULL, completed INTEGER NOT NULL DEFAULT 0);`);
+      CREATE TABLE IF NOT EXISTS battle_sessions(id TEXT PRIMARY KEY, token_id TEXT NOT NULL, started_at INTEGER NOT NULL, completed INTEGER NOT NULL DEFAULT 0);
+      CREATE TABLE IF NOT EXISTS chog_metadata(token_id TEXT PRIMARY KEY, name TEXT NOT NULL, image_url TEXT NOT NULL, traits_json TEXT NOT NULL, token_uri TEXT NOT NULL, fetched_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP);`);
     try { sqlite.exec('ALTER TABLE battle_sessions ADD COLUMN battle_id INTEGER'); } catch (error) { if (!String(error.message).includes('duplicate column name')) throw error; }
   }
 })();
@@ -49,6 +51,15 @@ function battleShape(x) { return x && { id: Number(x.id), tokenId: x.token_id, s
 
 export async function health() { await rows('SELECT 1 AS one'); return true; }
 export async function closeStore() { await ready; if (postgres) await pool.end(); else sqlite.close(); }
+export async function saveMetadata(data) {
+  await exec('INSERT INTO chog_metadata(token_id,name,image_url,traits_json,token_uri) VALUES(?,?,?,?,?) ON CONFLICT(token_id) DO UPDATE SET name=excluded.name,image_url=excluded.image_url,traits_json=excluded.traits_json,token_uri=excluded.token_uri,fetched_at=CURRENT_TIMESTAMP', [data.tokenId, data.name, data.imageUrl, JSON.stringify(data.traits), data.tokenURI]);
+}
+export async function getCachedMetadata(tokenId) {
+  const x = (await rows('SELECT token_id,name,image_url,traits_json,token_uri FROM chog_metadata WHERE token_id = ?', [tokenId]))[0];
+  if (!x) return null;
+  try { return { tokenId: x.token_id, name: x.name, imageUrl: x.image_url, traits: JSON.parse(x.traits_json), tokenURI: x.token_uri }; }
+  catch { return null; }
+}
 export async function statsFor(tokenId) {
   const [x] = await rows('SELECT COUNT(*) AS battles, SUM(survived) AS wins, MAX(score) AS best_score FROM battles WHERE token_id = ?', [tokenId]);
   const battles = Number(x.battles || 0), wins = Number(x.wins || 0);
