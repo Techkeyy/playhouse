@@ -7,6 +7,8 @@
 .owner-line a{color:#f8d777;text-decoration:underline;text-underline-offset:3px}
 .token-lookup{display:grid;gap:9px;margin:0 0 24px;padding:19px 22px;background:#1b3040;border:1px solid #3f6176;border-radius:13px}.token-lookup label{font-size:15px;font-weight:800}.token-lookup>div{display:flex;gap:10px}.token-lookup input{width:min(260px,100%);min-height:50px;border:1px solid #7490a1;border-radius:8px;padding:0 14px;background:#0f2332;color:#edf7ff;font:inherit}.token-lookup input::placeholder{color:#aac0ce}.token-lookup small{color:#b9ceda;font-size:12px}.token-lookup .owner-error{margin:0}@media(max-width:650px){.token-lookup>div{display:grid}.token-lookup input{width:100%}}
 .roster-help{max-width:720px;margin:-8px 0 24px;color:#c4d9e5;font-size:15px}
+.reveal-pending{opacity:0;transform:translateY(18px);transition:opacity .55s ease,transform .55s ease}
+.reveal-pending.reveal-visible{opacity:1;transform:none}
 
 /* Keep the fight instructions beside the action, especially on touch screens. */
 .fight-guide{display:flex;flex-wrap:wrap;gap:8px;margin:0 0 12px;padding:10px 12px;border:1px solid #4a7086;border-radius:10px;background:#1b3040;color:#dcebf3;font-size:13px;line-height:1.4}
