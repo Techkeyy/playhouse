@@ -52,7 +52,7 @@ export const server = createServer(async (req, res) => {
     if (req.method === 'POST' && process.env.PLAYHOUSE_APP_ORIGIN && req.headers.origin && req.headers.origin !== process.env.PLAYHOUSE_APP_ORIGIN) {
       return json(res, 403, { error: 'Request came from a different site.' });
     }
-    if (req.method === 'GET' && url.pathname === '/api/health') return json(res, 200, { ok: true, database: await health() });
+    if (req.method === 'GET' && url.pathname === '/api/health') return json(res, 200, { ok: true, database: await health(), storage: process.env.DATABASE_URL ? 'postgres' : 'sqlite' });
     if (req.method === 'GET' && url.pathname === '/api/doctor') {
       if (process.env.NODE_ENV === 'production') return json(res, 404, { error: 'Not found' });
       return json(res, 200, await doctor());
