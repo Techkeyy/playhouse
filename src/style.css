@@ -317,6 +317,9 @@ footer a{display:flex;align-items:center;gap:5px;text-decoration:underline;text-
   .roster{grid-template-columns:1fr}
   .card-image{max-height:245px}
   .hero-proof{font-size:12px}
+  .fight-guide span{flex-basis:100%;border-right:0;border-bottom:1px solid var(--ink)}
+  .fight-guide span:last-child{border-bottom:0}
+  .hud b{font-size:21px}
 }
 @media(prefers-reduced-motion:reduce){
   *,*:before,*:after{scroll-behavior:auto!important;transition:none!important;animation:none!important}
