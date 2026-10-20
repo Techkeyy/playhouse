@@ -1,32 +1,64 @@
 # Playhouse
 
-**Challenge a real Chog Genesis NFT as an arcade boss.** Anyone can choose a Chog, dodge its trait-shaped attacks for up to 45 seconds, and leave a battle record attached to that token.
-
 **[Play the live game](https://playhouse-chogathon.onrender.com/)** · **[Source code](https://github.com/Techkeyy/playhouse)** · **[Personal UAT checklist](docs/USER_UAT.md)**
 
-For anyone who wants to play with a Chog without owning one. A current holder can verify their wallet to choose the opening attack from that boss's permitted patterns.
+**A Chog NFT becomes a boss you can fight, level up, and meet again.** Pick a real Chog Genesis token, learn the attacks its traits produce, and try to survive its 45-second arena. Anyone can play; the current NFT holder can steer which permitted attack opens the fight.
 
-> *What if an NFT were a public opponent whose history grew each time someone challenged it?*
+For Chog fans who want to do more with a collectible than view its image or trade it, Playhouse turns the collection into a public arcade. You do not need an NFT or wallet to challenge one.
+
+> *What if the Chog you collected could become the opponent everyone remembers fighting?*
 
 Built for [Chogathon 2026](https://chogathon.chog.xyz/). The event requires Chog NFTs to be essential, and judges novelty (30%), fun (20%), retention (20%), clarity (15%), and execution (15%).
 
-**Current verification status:** local type check, build, and **25 automated tests** pass (11 server, 11 game, 3 audio). The deployed browser loaded six real Chogs, played token **330** (CHOG #1791), saved a battle, and showed the result after reload. A custom lookup loaded token **331** (CHOG #1792). Production health reported PostgreSQL storage, and a saved battle survived a redeploy. After a metadata-gateway fix, five fresh production token lookups (**343–347**) each returned HTTP 200; local keyless token **342** also loaded with the OpenSea key removed. A signed nonowner was rejected by a local HTTP ownership check. Desktop and narrow-browser play were checked. **Personal acceptance on a physical phone and the complete production owner journey with a genuine Genesis holder remain untested.** A demo video is pending.
-
 ## Why this exists
 
-NFT artwork and trait lists are usually things you view. Playhouse makes a Chog something you **face**. Its real token ID, traits, battle record, and current owner affect the experience. Visitors can play without owning an NFT. A genuine holder can use the owner controls if their wallet passes a current ownership check.
+An NFT usually has an image, a set of traits, and an owner. Those facts can be interesting, but they rarely give people a reason to interact with that *particular* token. Playhouse gives each Chog a second life as an opponent. Its artwork appears in the arena; its traits decide the move set; its onchain ID anchors a growing fight record; and its current holder can choose the first move from that Chog's allowed attacks.
 
 The [Chog site](https://www.chog.xyz/) already has a PFP maker, meme maker, snapshot tool, and messenger. [ChogHub](https://github.com/OluwapelumiAdebisi/ChogHub) explores an AI agent and quests tied to a Chog. Playhouse concentrates on a quick, replayable arcade fight against a token-specific boss.
+
+```text
+Real Genesis token on Monad
+  ├─ artwork + traits ──> animated boss, signature move, attack families, arena
+  ├─ token ID ──────────> saved fights, level, rematch history
+  └─ current owner ─────> signed permission to choose an allowed opening attack
+
+Anyone, including nonholders, can challenge the boss and add a battle record.
+```
+
+### One Chog, many challengers
+
+Suppose you pick onchain token **330**, displayed as **CHOG #1791**. Its **Dollar Cap** trait produces **Coin Rain**, a staggered series of falling columns. Before the round you see that move and its source trait. In the arena you watch warning lines, step into a safe lane, and try to keep three hearts for 45 seconds. Afterward, the attempt is saved to token 330's history. Other players can challenge the same boss, and every three recorded battles increase its level and speed. If the NFT is sold, that history remains with token 330 while the right to choose its opening attack moves to the new owner.
+
+That is the NFT test for Playhouse: removing the token would remove the boss's real identity, trait-derived moves, persistent record, and transferable owner control. The art alone could be replaced by any character image; these linked behaviors are what make the NFT matter.
+
+## Two ways to enter
+
+| If you are... | What you can do | What you need |
+| --- | --- | --- |
+| A player | Browse or look up a real token, inspect its move, fight, rematch, and add to its record. | A browser; no wallet or NFT. |
+| A Chog holder | Do everything a player can, then sign a challenge and choose which allowed attack leads your Chog's next fight. | The wallet that currently owns that Genesis token on Monad. |
+
+The holder chooses the **first attack family**, not an arbitrary custom move or an unbeatable pattern. Each Chog's trait rules still constrain its available attacks. The owner-control code and simulated-transfer tests are in place; a genuine Genesis holder has not completed that full flow on production yet.
 
 ## What it does
 
 1. **Loads** featured Chog Genesis tokens from the Monad mainnet contract. The API reads `ownerOf` and `tokenURI`, then fetches NFT metadata and traits from IPFS gateways or an optional OpenSea API fallback. Production browser testing loaded token **330** as **CHOG #1791**, with 12 traits and an onchain owner, and also loaded nonfeatured token **331**.
 2. **Builds** a boss profile from those traits using deterministic rules, including attack families, a title, and named signature attacks for qualifying real traits. The signature preview names the source trait; examples include token 330's Dollar Cap and Coin Rain.
-3. **Runs** a 45-second canvas survival round with keyboard, pointer drag, or phone movement buttons, warning telegraphs, hit points, a score, sound effects, and an original looping soundtrack. The real NFT art becomes an animated arena sprite; attack pressure rises at 15 and 30 seconds. Sound starts only after a user action and can be muted.
+3. **Runs** a 45-second canvas survival round with keyboard, pointer drag, or phone movement buttons, warning telegraphs, three hearts, a score, sound effects, and an original looping soundtrack. The real NFT art becomes an animated arena sprite; attack pressure rises at 15 and 30 seconds. Sound starts only after a user action and can be muted.
 4. **Records** the result in battle history keyed by the onchain token ID, using local SQLite or PostgreSQL when `DATABASE_URL` is set. The number of recorded battles raises the boss level, which changes attack speed.
 5. **Checks** wallet signatures and current `ownerOf` before an owner-only attack preference change. This flow must be tested with a genuine Chog holder before claiming it has been exercised end to end on mainnet.
 
 **Identity detail:** An NFT's displayed name number can differ from its onchain ID. For example, [CHOG #1853 is token ID 392](https://opensea.io/item/monad/0xc96d31f8626c6d03fae5dcd3d61e3fb9f4a73763/392). Playhouse keys records and authorization by the contract token ID.
+
+### What the traits change
+
+The profile is deterministic rather than randomly generated or AI written. For example, a Dollar Cap maps to Coin Rain's falling columns; an Inmate body maps to Cellblock Sweep's alternating bars; a Wizard head maps to Spell Orbit's expanding ring. Eye, aura, and background traits fill out the attack rotation and arena theme. The boss profile shows the named signature and source trait so a player can see why this token fights the way it does. The fight also changes with its history: later levels shorten the interval between attacks.
+
+**There is no loot or token reward.** The lasting outcome is the per-token battle record and the harder rematch it creates.
+
+## What has been verified
+
+Local type check, build, and **25 automated tests** pass (11 server, 11 game, 3 audio). The deployed browser loaded six real Chogs, played token **330** (CHOG #1791), saved a battle, and showed the result after reload. A custom lookup loaded token **331** (CHOG #1792). Production health reported PostgreSQL storage, and a saved battle survived a redeploy. After a metadata-gateway fix, six fresh production token lookups (**343–348**) each returned HTTP 200; local keyless token **342** also loaded with the OpenSea key removed. A signed nonowner was rejected by a local HTTP ownership check. Desktop and narrow-browser play were checked. **Personal acceptance on a physical phone and the complete production owner journey with a genuine Genesis holder remain untested.** A demo video is pending.
 
 ## Run locally
 
@@ -138,7 +170,7 @@ The **25 automated tests** exercise these cases. They establish specific behavio
 - Owner authentication currently uses EOA `personal_sign`; smart contract wallets are not covered by the tested flow.
 - Boss evolution currently means a level increase after every three recorded battles and a faster attack cadence. It is deterministic and is not machine learning.
 - Mainnet owner controls are designed around the real Genesis contract, but the team has no Genesis NFT and cannot claim a completed real-holder production test unless a holder actually participates.
-- [OpenSea instant keys expire after seven days](https://docs.opensea.io/reference/api-keys); this build's key expires **26 October 2026 at 09:32 UTC**. Playhouse reads the contract's `tokenURI` and tries IPFS gateways before the optional OpenSea fallback. An earlier fresh production lookup returned HTTP 503 when gateways timed out; the gateway list and timeout were updated. Five subsequently uncached production tokens (**343–347**) loaded successfully with image URLs on `ipfs.filebase.io`, and local token **342** loaded with the OpenSea key removed. The database stores validated metadata for previously loaded tokens as an outage fallback. The production checks show that fresh loading now works, while the local check proves the direct keyless path; **post-expiry production behavior is not yet verified**. The app cannot discover an uncached token if every gateway fails, guarantee that a cached image URL still serves artwork, or replace the live Monad `ownerOf` check.
+- [OpenSea instant keys expire after seven days](https://docs.opensea.io/reference/api-keys); this build's key expires **26 October 2026 at 09:32 UTC**. Playhouse reads the contract's `tokenURI` and tries IPFS gateways before the optional OpenSea fallback. An earlier fresh production lookup returned HTTP 503 when gateways timed out; the gateway list and timeout were updated. Six subsequently uncached production tokens (**343–348**) loaded successfully with image URLs on `ipfs.filebase.io`, and local token **342** loaded with the OpenSea key removed. The database stores validated metadata for previously loaded tokens as an outage fallback. The production checks show that fresh loading now works, while the local check proves the direct keyless path; **post-expiry production behavior is not yet verified**. The app cannot discover an uncached token if every gateway fails, guarantee that a cached image URL still serves artwork, or replace the live Monad `ownerOf` check.
 - The API uses local SQLite by default and PostgreSQL with `DATABASE_URL`. Production PostgreSQL health and a battle surviving redeploy were checked; long-term durability under load has not been tested.
 - Deployed nonholder browser UAT passed for a round, save, history refresh, and custom token lookup. A narrow-browser round included movement and a saved result. Physical phone touch and listening checks remain for personal UAT. A real Genesis holder has not completed owner-control UAT.
 

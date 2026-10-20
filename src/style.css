@@ -294,7 +294,7 @@ footer a{display:flex;align-items:center;gap:5px;text-decoration:underline;text-
 }
 @media(max-width:430px){
   .brand{font-size:23px;gap:5px}
-  .brand svg{width:26px;height:26px}
+  .brand svg,.brand img{width:26px;height:26px}
   .site-nav{gap:4px}
   .sound-toggle{width:44px;padding:0}
   .sound-toggle span{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap}

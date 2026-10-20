@@ -94,7 +94,7 @@ export default function App(){
   return <main id="main-content" className={'app-shell stage-'+stage}>
     <div className="scroll-progress" aria-hidden="true"><span style={{transform:'scaleX('+scrollProgress+')'}}/></div>
     <header className="site-head">
-      <button type="button" className="brand brand-button" onClick={goHome} disabled={roundActive} aria-label={roundActive?'Playhouse home unavailable during a live round':'Playhouse home'}><BrandGlyph size={34}/><span>PLAYHOUSE<span className="brand-dot">.</span></span></button>
+      <button type="button" className="brand brand-button" onClick={goHome} disabled={roundActive} aria-label={roundActive?'Playhouse home unavailable during a live round':'Playhouse home'}><img src="/playhouse-mark.svg" width="34" height="34" alt=""/><span>PLAYHOUSE<span className="brand-dot">.</span></span></button>
       <nav className="site-nav" aria-label="Main navigation">
         <button type="button" className="sound-toggle" onClick={()=>void toggleSound()} aria-label={sound.unlocked&&!sound.muted?'Mute sound':'Enable sound'} aria-pressed={sound.unlocked&&!sound.muted}><SoundIcon muted={!sound.unlocked||sound.muted} size={20}/><span>{sound.unlocked&&!sound.muted?'Sound on':'Sound off'}</span></button>
         <button type="button" className="nav-play" onClick={openLineup} disabled={roundActive}>{roundActive?'Round active':'Enter arcade'} <ArrowIcon size={17}/></button>
