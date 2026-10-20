@@ -1,6 +1,6 @@
 # Playhouse
 
-**[Play the live game](https://playhouse-chogathon.onrender.com/)** · **[Source code](https://github.com/Techkeyy/playhouse)** · **[Personal UAT checklist](docs/USER_UAT.md)**
+**[Play the live game](https://playhouse-chogathon.onrender.com/)** · **[Source code](https://github.com/Techkeyy/playhouse)** ·
 
 **A Chog NFT becomes a boss you can fight, level up, and meet again.** Pick a real Chog Genesis token, learn the attacks its traits produce, and try to survive its 45-second arena. Anyone can play; the current NFT holder can steer which permitted attack opens the fight.
 
