@@ -10,7 +10,7 @@
 4. Finish or lose the round. Confirm the result and saved status appear. Select **Rematch this Chog** and confirm it starts a fresh round.
 5. Return to token 330, reload the page, select it again, and confirm your saved battle remains in Recent battles. Note the score and battle count before and after.
 6. Select the **third featured Chog**, token **1053** (CHOG #545). During its fight, check that its full NFT art moves as an arena sprite, its Aura changes the glow, and the boss reacts when it attacks or takes a hit. The art is a flat NFT image animated as a sprite, so it is not a separately rigged character cutout.
-7. Try to last past **15 seconds** and **30 seconds**. Note whether attack cadence and pattern density rise while warning paths remain readable. If you cannot reach those marks, record your longest run and whether the difficulty feels fair.
+7. Play at least two rounds and try to last past **15 seconds** and **30 seconds**. Confirm you start with four hearts, later waves still feel harder, and the warning paths remain readable. Record your longest run, whether you survived all 45 seconds, and whether winning feels achievable without becoming automatic. On a phone, check that late falling columns leave a path you can dodge through.
 8. Compare token **330** (Coin Rain), **1538** (Cellblock Sweep), and **1053** (Rally Orbit). Confirm their preview descriptions name the real source traits and their fight patterns visibly differ. Enable sound on the landing page: the lively loop should begin only after your click. Confirm it stays quieter than attack cues, continues between fights, and stops while muted. Check attack, dodge, hit, and result cues too.
 
 ## 2. Arbitrary real token lookup

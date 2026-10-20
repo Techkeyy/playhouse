@@ -27,7 +27,7 @@ Anyone, including nonholders, can challenge the boss and add a battle record.
 
 ### One Chog, many challengers
 
-Suppose you pick onchain token **330**, displayed as **CHOG #1791**. Its **Dollar Cap** trait produces **Coin Rain**, a staggered series of falling columns. Before the round you see that move and its source trait. In the arena you watch warning lines, step into a safe lane, and try to keep three hearts for 45 seconds. Afterward, the attempt is saved to token 330's history. Other players can challenge the same boss, and every three recorded battles increase its level and speed. If the NFT is sold, that history remains with token 330 while the right to choose its opening attack moves to the new owner.
+Suppose you pick onchain token **330**, displayed as **CHOG #1791**. Its **Dollar Cap** trait produces **Coin Rain**, a staggered series of falling columns. Before the round you see that move and its source trait. In the arena you watch warning lines, step into a safe lane, and try to keep four hearts for 45 seconds. Afterward, the attempt is saved to token 330's history. Other players can challenge the same boss, and every three recorded battles increase its level and speed. If the NFT is sold, that history remains with token 330 while the right to choose its opening attack moves to the new owner.
 
 That is the NFT test for Playhouse: removing the token would remove the boss's real identity, trait-derived moves, persistent record, and transferable owner control. The art alone could be replaced by any character image; these linked behaviors are what make the NFT matter.
 
@@ -44,7 +44,7 @@ The holder chooses the **first attack family**, not an arbitrary custom move or 
 
 1. **Loads** featured Chog Genesis tokens from the Monad mainnet contract. The API reads `ownerOf` and `tokenURI`, then fetches NFT metadata and traits from IPFS gateways or an optional OpenSea API fallback. Production browser testing loaded token **330** as **CHOG #1791**, with 12 traits and an onchain owner, and also loaded nonfeatured token **331**.
 2. **Builds** a boss profile from those traits using deterministic rules, including attack families, a title, and named signature attacks for qualifying real traits. The signature preview names the source trait; examples include token 330's Dollar Cap and Coin Rain.
-3. **Runs** a 45-second canvas survival round with keyboard, pointer drag, or phone movement buttons, warning telegraphs, three hearts, a score, sound effects, and an original looping soundtrack. The real NFT art becomes an animated arena sprite; attack pressure rises at 15 and 30 seconds. Sound starts only after a user action and can be muted.
+3. **Runs** a 45-second canvas survival round with keyboard, pointer drag, or phone movement buttons, warning telegraphs, four hearts, a score, sound effects, and an original looping soundtrack. The real NFT art becomes an animated arena sprite; attack pressure rises at 15 and 30 seconds. Sound starts only after a user action and can be muted.
 4. **Records** the result in battle history keyed by the onchain token ID, using local SQLite or PostgreSQL when `DATABASE_URL` is set. The number of recorded battles raises the boss level, which changes attack speed.
 5. **Checks** wallet signatures and current `ownerOf` before an owner-only attack preference change. This flow must be tested with a genuine Chog holder before claiming it has been exercised end to end on mainnet.
 
@@ -58,7 +58,7 @@ The profile is deterministic rather than randomly generated or AI written. For e
 
 ## What has been verified
 
-Local type check, build, and **25 automated tests** pass (11 server, 11 game, 3 audio). The deployed browser loaded six real Chogs, played token **330** (CHOG #1791), saved a battle, and showed the result after reload. A custom lookup loaded token **331** (CHOG #1792). Production health reported PostgreSQL storage, and a saved battle survived a redeploy. After a metadata-gateway fix, six fresh production token lookups (**343–348**) each returned HTTP 200; local keyless token **342** also loaded with the OpenSea key removed. A signed nonowner was rejected by a local HTTP ownership check. Desktop and narrow-browser play were checked. **Personal acceptance on a physical phone and the complete production owner journey with a genuine Genesis holder remain untested.** A demo video is pending.
+Local type check, build, and **26 automated tests** pass (11 server, 12 game, 3 audio). The deployed browser loaded six real Chogs, played token **330** (CHOG #1791), saved a battle, and showed the result after reload. A custom lookup loaded token **331** (CHOG #1792). Production health reported PostgreSQL storage, and a saved battle survived a redeploy. After a metadata-gateway fix, six fresh production token lookups (**343–348**) each returned HTTP 200; local keyless token **342** also loaded with the OpenSea key removed. A signed nonowner was rejected by a local HTTP ownership check. Desktop and narrow-browser play were checked. **Personal acceptance on a physical phone and the complete production owner journey with a genuine Genesis holder remain untested.** A demo video is pending.
 
 ## Run locally
 
@@ -114,7 +114,7 @@ npm test
 npm run build
 ```
 
-The last recorded run passed **25 tests** (11 server, 11 game, 3 audio); `npm run check` and `npm run build` also passed. The tests cover trait-specific attack paths, portrait playfield bounds, sound gesture gating and mute behavior, metadata validation and fallback including gateway timeouts and expired OpenSea responses, battle history/evolution, one-use battle sessions and idempotent retry, and wallet signature/ownership-transfer simulation. The deployed PostgreSQL health check and a saved battle surviving redeploy were verified; these checks are not a real Genesis holder test.
+The last recorded run passed **26 tests** (11 server, 12 game, 3 audio); `npm run check` and `npm run build` also passed. The tests cover trait-specific attack paths, portrait playfield bounds, sound gesture gating and mute behavior, metadata validation and fallback including gateway timeouts and expired OpenSea responses, battle history/evolution, one-use battle sessions and idempotent retry, and wallet signature/ownership-transfer simulation. The deployed PostgreSQL health check and a saved battle surviving redeploy were verified; these checks are not a real Genesis holder test.
 
 ## Try the player flow
 
@@ -134,7 +134,7 @@ The API routes are `POST /api/auth/challenge`, `POST /api/auth/verify`, and `POS
 
 ## How we tried to break it
 
-The **25 automated tests** exercise these cases. They establish specific behavior in code and controlled conditions; they do not substitute for a physical phone test or a genuine Genesis holder session.
+The **26 automated tests** exercise these cases. They establish specific behavior in code and controlled conditions; they do not substitute for a physical phone test or a genuine Genesis holder session.
 
 | Input or condition | Verified result |
 | --- | --- |

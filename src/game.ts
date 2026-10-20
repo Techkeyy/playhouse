@@ -1,13 +1,13 @@
-export const WIDTH=900, MOBILE_WIDTH=450, HEIGHT=500, ROUND_MS=45_000;
+export const WIDTH=900, MOBILE_WIDTH=450, HEIGHT=500, ROUND_MS=45_000, STARTING_HEALTH=4;
 type Vec={x:number;y:number};
 export type AttackFamily='pulse'|'falling'|'sweep'|'orbit';
 type Shot=Vec & {vx:number;vy:number;r:number;kind:AttackFamily;motif:string;age:number;telegraph:number;dodged:boolean};
 export type GameState={elapsed:number;player:Vec;hp:number;score:number;hits:number;dodges:number;shots:Shot[];lastSpawn:number;waves:number;lastFamily:AttackFamily;lastMotif:string;invulnerable:number;done:boolean;won:boolean;move:Vec;target:Vec|null};
-export function newGame(width=WIDTH):GameState{return {elapsed:0,player:{x:width/2,y:410},hp:3,score:0,hits:0,dodges:0,shots:[],lastSpawn:0,waves:0,lastFamily:'pulse',lastMotif:'',invulnerable:0,done:false,won:false,move:{x:0,y:0},target:null};}
+export function newGame(width=WIDTH):GameState{return {elapsed:0,player:{x:width/2,y:410},hp:STARTING_HEALTH,score:0,hits:0,dodges:0,shots:[],lastSpawn:0,waves:0,lastFamily:'pulse',lastMotif:'',invulnerable:0,done:false,won:false,move:{x:0,y:0},target:null};}
 const clamp=(n:number,a:number,b:number)=>Math.max(a,Math.min(b,n));
 const dist=(a:Vec,b:Vec)=>Math.hypot(a.x-b.x,a.y-b.y);
 export const heatPhase=(elapsed:number)=>elapsed>=30_000?2:elapsed>=15_000?1:0;
-export const spawnCadence=(elapsed:number,level:number)=>Math.max(400,840-heatPhase(elapsed)*125-(Math.max(1,Math.min(level,12))-1)*39);
+export const spawnCadence=(elapsed:number,level:number)=>Math.max(480,1000-heatPhase(elapsed)*110-(Math.max(1,Math.min(level,12))-1)*30);
 const signatureFamily:Record<string,AttackFamily>={'coin-rain':'falling','token-rain':'falling','gold-rain':'falling','trait-rain':'falling','cell-bars':'sweep','frost-sweep':'sweep','stripe-sweep':'sweep','body-sweep':'sweep','visor-scan':'sweep','rally-orbit':'orbit','spell-orbit':'orbit','round-gaze':'orbit','aura-spiral':'orbit','eye-orbit':'orbit','ember-burst':'pulse','joy-pulse':'pulse','headwear-burst':'pulse'};
 export function advance(g:GameState,dtMs:number,families:string[],level:number,signatureId='',width=WIDTH):GameState{
  if(g.done)return g;
@@ -27,7 +27,7 @@ export function advance(g:GameState,dtMs:number,families:string[],level:number,s
    const emit=(x:number,y:number,vx:number,vy:number,r:number,kind:AttackFamily,delayMs=0)=>g.shots.push({x,y,vx,vy,r,kind,motif,age:-delayMs,telegraph,dodged:false});
    if(family==='falling'){
      const x=clamp(g.player.x,45,width-45);const cascade=['coin-rain','token-rain','gold-rain','trait-rain'].includes(motif);const offsets=cascade?[-136,-68,0,68,136]:phase===0?[-100,0,100]:phase===1?[-140,-70,0,70,140]:[-175,-105,-35,35,105,175];
-     offsets.forEach((offset,i)=>emit(clamp(x+offset*(width/WIDTH),25,width-25),attackY,0,speed,phase===2?16:15,'falling',cascade?i*75:0));
+     offsets.forEach((offset,i)=>emit(clamp(x+offset*Math.max(1,width/WIDTH),25,width-25),attackY,0,speed,phase===2?16:15,'falling',cascade?i*75:0));
    }else if(family==='sweep'){
      const fromLeft=count%2===0;const lanes=phase===2?5:4;const alternating=['cell-bars','frost-sweep','stripe-sweep','body-sweep'].includes(motif);for(let i=0;i<lanes;i++){const left=alternating?i%2===0:fromLeft;emit(left?-25:width+25,215+i*(phase===2?62:78),left?speed*1.2:-speed*1.2,0,alternating?21:17,'sweep',alternating?i*65:0);}
    }else if(family==='orbit'){
@@ -41,7 +41,7 @@ export function advance(g:GameState,dtMs:number,families:string[],level:number,s
    if(shot.age<shot.telegraph)continue;
    shot.x+=shot.vx*dt;shot.y+=shot.vy*dt;
    const gap=dist(shot,g.player);
-   if(gap<shot.r+14&&g.invulnerable===0){g.hp--;g.hits++;g.invulnerable=1000;shot.y=HEIGHT+100;}
+   if(gap<shot.r+14&&g.invulnerable===0){g.hp--;g.hits++;g.invulnerable=1250;shot.y=HEIGHT+100;}
    else if(!shot.dodged&&gap<shot.r+35&&gap>=shot.r+14){shot.dodged=true;g.dodges++;g.score+=15;}
  }
  g.shots=g.shots.filter(s=>s.x>-60&&s.x<width+60&&s.y<HEIGHT+60);

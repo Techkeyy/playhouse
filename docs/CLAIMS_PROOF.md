@@ -1,6 +1,6 @@
 # Playhouse: claims-to-proof ledger
 
-This is a review checklist to keep the README and submission aligned with the running product. Current checks: **11 game tests, 11 backend tests, 3 audio tests**, local type check and build, production PostgreSQL health, and deployed desktop and narrow-browser play. Fresh production tokens 343–347 loaded through an IPFS gateway; the local keyless check loaded token 342 with OpenSea disabled. Physical phone touch/listening, post-expiry behavior, and a real Genesis holder test remain outstanding.
+This is a review checklist to keep the README and submission aligned with the running product. Current checks: **12 game tests, 11 backend tests, 3 audio tests**, local type check and build, production PostgreSQL health, and deployed desktop and narrow-browser play. Fresh production tokens 343–347 loaded through an IPFS gateway; the local keyless check loaded token 342 with OpenSea disabled. Physical phone touch/listening, post-expiry behavior, and a real Genesis holder test remain outstanding.
 
 ## Core user journey to prove
 

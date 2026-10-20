@@ -1,6 +1,6 @@
 import {useCallback,useEffect,useRef,useState} from 'react';
 import {getChog,getChogs,saveBattle,startBattle,type BattleSummary,type Chog} from './api';
-import {advance,drawGame,HEIGHT,MOBILE_WIDTH,newGame,ROUND_MS,WIDTH,type GameState} from './game';
+import {advance,drawGame,HEIGHT,MOBILE_WIDTH,newGame,ROUND_MS,STARTING_HEALTH,WIDTH,type GameState} from './game';
 import OwnerControls from './OwnerControls';
 import {playhouseAudio} from './audio';
 import {ArrowIcon,AttackDiagram,BrandGlyph,ScrollProgressGraphic,SoundIcon} from './PlayhouseVisuals';
@@ -12,7 +12,7 @@ const round=(n:number)=>Math.floor(n).toLocaleString();
 function Arena({chog,onFinish,onStarted}:{chog:Chog;onFinish:(g:GameState)=>void;onStarted:()=>void}){
  const worldWidth=useRef(window.matchMedia('(max-width: 720px) and (orientation: portrait)').matches?MOBILE_WIDTH:WIDTH).current;
  const canvas=useRef<HTMLCanvasElement>(null);const state=useRef(newGame(worldWidth));const image=useRef<HTMLImageElement|null>(null);const keys=useRef(new Set<string>());const callback=useRef(onFinish);const audioCount=useRef({waves:0,dodges:0,hits:0});const touchStart=useRef<{id:number;x:number;y:number;playerX:number;playerY:number}|null>(null);
- const [hud,setHud]=useState({time:45,hp:3,score:0,dodges:0});
+ const [hud,setHud]=useState({time:45,hp:STARTING_HEALTH,score:0,dodges:0});
  const [started,setStarted]=useState(false);
  const [arenaSound,setArenaSound]=useState(playhouseAudio.getSettings());
  useEffect(()=>playhouseAudio.subscribe(setArenaSound),[]);
@@ -48,7 +48,7 @@ function Arena({chog,onFinish,onStarted}:{chog:Chog;onFinish:(g:GameState)=>void
  const holdDirection=(key:string)=>(e:React.PointerEvent<HTMLButtonElement>)=>{e.preventDefault();e.currentTarget.setPointerCapture(e.pointerId);keys.current.add(key);state.current.target=null;};
  const releaseDirection=(key:string)=>(e:React.PointerEvent<HTMLButtonElement>)=>{e.preventDefault();keys.current.delete(key);};
  return <section className={`fight${started?' is-active':''}${worldWidth===MOBILE_WIDTH?' mobile-play':''}`} aria-label={`Fight ${chog.name}`}>
-   <div className="fight-head"><div><span className="eyebrow">LIVE ROUND</span><h2>{chog.name}</h2><p>{chog.bossProfile.title} · {chog.bossProfile.arenaTheme} arena</p></div><div className="hud"><span><b>{hud.time}</b> SEC</span><span><b>{'♥'.repeat(Math.max(0,hud.hp))}{'♡'.repeat(3-Math.max(0,hud.hp))}</b> HEALTH</span><span><b>{round(hud.score)}</b> SCORE</span></div></div>
+   <div className="fight-head"><div><span className="eyebrow">LIVE ROUND</span><h2>{chog.name}</h2><p>{chog.bossProfile.title} · {chog.bossProfile.arenaTheme} arena</p></div><div className="hud"><span><b>{hud.time}</b> SEC</span><span><b>{'♥'.repeat(Math.max(0,hud.hp))}{'♡'.repeat(STARTING_HEALTH-Math.max(0,hud.hp))}</b> HEALTH</span><span><b>{round(hud.score)}</b> SCORE</span></div></div>
    <div className="fight-guide" aria-label="How to play"><span><strong>Move:</strong> arrows or WASD</span><span><strong>Touch:</strong> drag in the arena</span><span><strong>Dodge:</strong> warning shapes show where attacks will land</span><span><strong>Goal:</strong> survive 45 seconds</span></div>
    {!started&&<div className="fight-ready" role="status"><p>Ready to face {chog.name}? Move into the open space after each warning. Your 45 seconds begin when you press Start.</p><button type="button" className="primary" onClick={startRound}>Start 45-second round →</button></div>}
    <canvas ref={canvas} width={worldWidth} height={HEIGHT} onPointerDown={e=>{if(!started)return;e.currentTarget.setPointerCapture(e.pointerId);pointer(e);}} onPointerMove={e=>{if(started&&(e.buttons||touchStart.current?.id===e.pointerId))pointer(e);}} onPointerUp={releasePointer} onPointerCancel={releasePointer} aria-label="Battle arena. Use arrow keys, WASD, or drag to dodge incoming attacks."/>
