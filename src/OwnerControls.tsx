@@ -21,8 +21,8 @@ export default function OwnerControls({chog,onUpdate}:{chog:Chog;onUpdate:(chog:
    const verified=await post<{token:string}>('/api/auth/verify',{nonce:challenge.nonce,signature});setSession(verified.token);
  }catch(e){setError(e instanceof Error?e.message:'Could not verify ownership. Please try again.');}finally{setBusy(false);}};
  const save=async()=>{if(!session)return;setBusy(true);setError('');setSaved(false);try{const result=await post<{chog:Chog}>(`/api/chogs/${encodeURIComponent(chog.tokenId)}/settings`,{preferredAttack:attack},session);onUpdate(result.chog);setSaved(true);}catch(e){setError(e instanceof Error?e.message:'Could not save the attack preference.');setSession('');}finally{setBusy(false);}};
- return <div className="owner-controls"><div><span className="eyebrow">FOR THIS CHOG'S OWNER</span><h3>Tune the next fight</h3><p>Prove you own this token, then choose which of its trait-based attacks comes first. Control follows the NFT if it changes hands.</p></div>
+ return <section className="owner-controls" aria-labelledby="owner-controls-title"><div><span className="eyebrow">HOLDER CONTROL / TOKEN {chog.tokenId}</span><h3 id="owner-controls-title">COMMAND YOUR BOSS.</h3><p>Own this Chog? Verify your wallet to choose its opening attack. Ownership and control follow the NFT when it changes hands.</p></div>
  {!session?<button className="secondary" onClick={()=>void connect()} disabled={busy}>{busy?'Checking ownership...':'Verify owner wallet'}</button>:<div className="owner-edit"><label htmlFor="preferred-attack">First attack pattern</label><select id="preferred-attack" value={attack} onChange={e=>{setAttack(e.target.value);setSaved(false);}}>{chog.bossProfile.attackFamilies.map(f=><option key={f} value={f}>{f[0].toUpperCase()+f.slice(1)}</option>)}</select><button className="secondary" onClick={()=>void save()} disabled={busy}>{busy?'Saving...':'Save attack choice'}</button></div>}
  {saved&&<p className="owner-success" role="status">Saved. Your chosen pattern will lead this Chog's next fight.</p>}{error&&<p className="owner-error" role="alert">{error}</p>}
- </div>;
+ </section>;
 }
