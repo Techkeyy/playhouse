@@ -197,6 +197,7 @@ button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible{ou
 .fight-ready p{max-width:600px;margin:0;font-size:15px;font-weight:600}
 .fight-ready .primary{flex:none;background:var(--white)}
 .fight canvas{display:block;width:100%;height:auto;aspect-ratio:9/5;border:4px solid var(--ink);touch-action:none;cursor:crosshair}
+.touch-controls{display:none}
 .arena-foot{display:flex;justify-content:space-between;gap:15px;margin-top:13px;color:#515149;font-size:14px}
 .results{padding:48px max(24px,4vw) 80px;background:var(--ink);color:var(--white)}
 .result-layout{display:grid;grid-template-columns:1fr 1fr;gap:clamp(26px,5vw,70px);align-items:center;padding-top:36px}
@@ -265,6 +266,23 @@ footer a{display:flex;align-items:center;gap:5px;text-decoration:underline;text-
   .owner-controls{margin:0 18px 55px;grid-template-columns:1fr}
   .owner-edit{flex-wrap:wrap}
   .fight{padding:30px 18px 55px}
+  .fight.is-active.mobile-play{position:fixed;z-index:50;inset:0;box-sizing:border-box;display:flex;flex-direction:column;align-items:stretch;gap:8px;overflow:hidden;overscroll-behavior:contain;padding:calc(env(safe-area-inset-top) + 8px) 10px calc(env(safe-area-inset-bottom) + 8px);background:var(--paper)}
+  .fight.is-active.mobile-play .fight-head{display:grid;grid-template-columns:minmax(0,1fr) auto;align-items:center;gap:7px;padding-bottom:7px}
+  .fight.is-active.mobile-play .fight-head h2{font-size:clamp(24px,5vw,32px);line-height:.9;overflow-wrap:anywhere}
+  .fight.is-active.mobile-play .fight-head p{display:none}
+  .fight.is-active.mobile-play .eyebrow{font-size:10px}
+  .fight.is-active.mobile-play .hud{margin:0;gap:3px}
+  .fight.is-active.mobile-play .hud span{min-width:0;padding:5px 4px;font-size:9px;white-space:nowrap}
+  .fight.is-active.mobile-play .hud b{font-size:20px}
+  .fight.is-active.mobile-play .fight-guide,.fight.is-active.mobile-play .arena-foot{display:none}
+  .fight.is-active.mobile-play canvas{flex:none;align-self:center;width:min(100%,calc(90dvh - 176px));height:auto;max-height:calc(100dvh - 170px);aspect-ratio:9/10;border-width:2px}
+  .fight.mobile-play .touch-controls{display:block;flex:none;text-align:center;touch-action:none}
+  .touch-controls-head{display:flex;justify-content:space-between;align-items:center;gap:8px;margin-bottom:4px}
+  .touch-controls span{display:block;font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.05em}
+  .touch-directions{display:flex;justify-content:center;gap:8px}
+  .touch-directions button{flex:1;max-width:90px;min-width:0;min-height:55px;border:2px solid var(--ink);border-radius:8px;background:var(--white);color:var(--ink);font-size:26px;font-weight:800;touch-action:none;user-select:none;-webkit-user-select:none}
+  .touch-controls .fight-sound{display:flex;align-items:center;gap:4px;min-height:28px;padding:3px 6px;border:1px solid var(--ink);border-radius:4px;background:var(--white);font-size:11px;font-weight:700;touch-action:manipulation}
+  .touch-controls button:active{background:var(--energy);transform:translateY(2px)}
   .fight-ready{display:block}
   .fight-ready .primary{margin-top:13px;width:100%}
   .results{padding:38px 18px 60px}
@@ -320,6 +338,26 @@ footer a{display:flex;align-items:center;gap:5px;text-decoration:underline;text-
   .fight-guide span{flex-basis:100%;border-right:0;border-bottom:1px solid var(--ink)}
   .fight-guide span:last-child{border-bottom:0}
   .hud b{font-size:21px}
+}
+@media(max-height:560px) and (orientation:portrait){
+  .fight.is-active.mobile-play{gap:4px;padding-top:calc(env(safe-area-inset-top) + 4px);padding-bottom:calc(env(safe-area-inset-bottom) + 4px)}
+  .fight.is-active.mobile-play canvas{width:min(100%,calc(90dvh - 154px));max-height:calc(100dvh - 140px)}
+  .fight.mobile-play .touch-directions button{min-height:44px}
+}
+@media(orientation:landscape){
+  .fight.is-active.mobile-play{position:fixed;z-index:50;inset:0;display:flex;flex-direction:row;align-items:center;gap:8px;overflow:hidden;padding:8px;background:var(--paper)}
+  .fight.is-active.mobile-play .fight-head{display:block;flex:0 0 140px;min-width:0;align-self:stretch;border-bottom:0}
+  .fight.is-active.mobile-play .fight-head h2{font-size:25px;line-height:.9;overflow-wrap:anywhere}
+  .fight.is-active.mobile-play .fight-head p,.fight.is-active.mobile-play .fight-guide,.fight.is-active.mobile-play .arena-foot{display:none}
+  .fight.is-active.mobile-play .hud{display:flex;flex-direction:column;margin-top:9px;gap:3px}
+  .fight.is-active.mobile-play .hud span{min-width:0;padding:4px;font-size:9px}
+  .fight.is-active.mobile-play .hud b{font-size:19px}
+  .fight.is-active.mobile-play canvas{flex:1 1 auto;min-width:0;width:min(100%,calc(90dvh - 14px));max-width:calc(90dvh - 14px);height:auto;max-height:calc(100dvh - 16px);aspect-ratio:9/10;border-width:2px}
+  .fight.mobile-play .touch-controls{display:block;flex:0 0 110px;min-width:0}
+  .fight.mobile-play .touch-controls-head{display:block}
+  .fight.mobile-play .touch-controls-head span{font-size:10px;margin-bottom:4px}
+  .fight.mobile-play .touch-directions{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:4px}
+  .fight.mobile-play .touch-directions button{min-height:48px;font-size:22px}
 }
 @media(prefers-reduced-motion:reduce){
   *,*:before,*:after{scroll-behavior:auto!important;transition:none!important;animation:none!important}

@@ -20,11 +20,10 @@ function readSavedSettings(): Pick<AudioSettings, 'muted' | 'volume' | 'ambientE
   if (typeof window === 'undefined') return defaults;
   try {
     const saved = JSON.parse(window.localStorage.getItem(STORAGE_KEY) || '{}');
-    const prefersReducedMotion = window.matchMedia?.('(prefers-reduced-motion: reduce)').matches ?? false;
     return {
       muted: typeof saved.muted === 'boolean' ? saved.muted : defaults.muted,
       volume: typeof saved.volume === 'number' ? clampAudioVolume(saved.volume) : defaults.volume,
-      ambientEnabled: typeof saved.ambientEnabled === 'boolean' ? saved.ambientEnabled : !prefersReducedMotion,
+      ambientEnabled: typeof saved.ambientEnabled === 'boolean' ? saved.ambientEnabled : defaults.ambientEnabled,
     };
   } catch { return defaults; }
 }
@@ -32,8 +31,11 @@ function readSavedSettings(): Pick<AudioSettings, 'muted' | 'volume' | 'ambientE
 export class PlayhouseAudio {
   private context: AudioContext | null = null;
   private master: GainNode | null = null;
-  private ambientTimer: ReturnType<typeof setInterval> | null = null;
-  private ambientWanted = false;
+  private musicBus: GainNode | null = null;
+  private musicTimer: ReturnType<typeof setInterval> | null = null;
+  private musicWanted = false;
+  private nextMusicStep = 0;
+  private nextMusicTime = 0;
   private lastAttackAt = Number.NEGATIVE_INFINITY;
   private listeners = new Set<SettingsListener>();
   private settings: AudioSettings = { ...readSavedSettings(), unlocked: false };
@@ -56,7 +58,12 @@ export class PlayhouseAudio {
 
   /** Call within a Play/Enable sound button gesture. Nothing creates audio before this. */
   async unlock(): Promise<boolean> {
-    if (this.settings.unlocked) return true;
+    if (this.settings.unlocked) {
+      // Mobile browsers can suspend a previously unlocked context in the background.
+      if (this.context?.state === 'suspended') await this.context.resume();
+      this.startSoundtrack();
+      return this.context?.state === 'running';
+    }
     if (typeof window === 'undefined') return false;
     const WebAudio = window.AudioContext;
     if (!WebAudio) return false;
@@ -65,26 +72,31 @@ export class PlayhouseAudio {
       this.master = this.context.createGain();
       this.master.gain.value = this.settings.muted ? 0 : this.settings.volume;
       this.master.connect(this.context.destination);
+      this.musicBus = this.context.createGain();
+      this.musicBus.gain.value = 0;
+      this.musicBus.connect(this.master);
       await this.context.resume();
       this.settings.unlocked = this.context.state === 'running';
       if (!this.settings.unlocked) return false;
+      // The visible "Enable sound" gesture also enables music for older saved settings.
+      this.settings.ambientEnabled = true;
       document.addEventListener('visibilitychange', this.handleVisibility);
-      this.announce();
-      if (this.ambientWanted) this.startAmbient();
+      this.persist();
+      this.startSoundtrack();
       return true;
     } catch { return false; }
   }
 
   private handleVisibility = (): void => {
-    if (document.hidden) this.clearAmbientTimer();
-    else if (this.ambientWanted) this.startAmbient();
+    if (document.hidden) this.pauseSoundtrack();
+    else if (this.musicWanted) this.startSoundtrack();
   };
 
   setMuted(muted: boolean): void {
     this.settings.muted = Boolean(muted);
     this.applyMaster();
-    if (muted) this.clearAmbientTimer();
-    else if (this.ambientWanted) this.startAmbient();
+    if (muted) this.pauseSoundtrack();
+    else if (this.musicWanted) this.startSoundtrack();
     this.persist();
   }
 
@@ -101,8 +113,8 @@ export class PlayhouseAudio {
 
   setAmbientEnabled(enabled: boolean): void {
     this.settings.ambientEnabled = Boolean(enabled);
-    if (!enabled) this.clearAmbientTimer();
-    else if (this.ambientWanted) this.startAmbient();
+    if (!enabled) this.pauseSoundtrack();
+    else if (this.musicWanted) this.startSoundtrack();
     this.persist();
   }
 
@@ -129,26 +141,84 @@ export class PlayhouseAudio {
     oscillator.onended = () => { oscillator.disconnect(); envelope.disconnect(); };
   }
 
-  startAmbient(): void {
-    this.ambientWanted = true;
-    if (!this.settings.unlocked || this.settings.muted || !this.settings.ambientEnabled || this.ambientTimer || (typeof document !== 'undefined' && document.hidden)) return;
-    this.ambientPhrase();
-    this.ambientTimer = setInterval(() => this.ambientPhrase(), 4200);
+  /** An original, eight-bar arcade loop. Audio begins only after unlock() is called from a gesture. */
+  startSoundtrack(): void {
+    this.musicWanted = true;
+    if (!this.context || !this.musicBus || !this.settings.unlocked || this.settings.muted || !this.settings.ambientEnabled || this.musicTimer || (typeof document !== 'undefined' && document.hidden)) return;
+    this.nextMusicStep = 0;
+    this.nextMusicTime = this.context.currentTime + 0.05;
+    this.musicBus.gain.setTargetAtTime(0.8, this.context.currentTime, 0.07);
+    this.scheduleMusic();
+    this.musicTimer = setInterval(() => this.scheduleMusic(), 80);
   }
 
-  private ambientPhrase(): void {
-    // A sparse original three-note lullaby, deliberately below the combat cues.
-    this.tone(174.61, 2.2, 0.018, 'sine');
-    this.tone(261.63, 1.7, 0.011, 'sine', 0.34);
-    this.tone(349.23, 1.9, 0.009, 'sine', 0.9);
+  private musicNote(frequency: number, time: number, duration: number, peak: number, type: OscillatorType = 'sine', endingFrequency?: number): void {
+    if (!this.context || !this.musicBus) return;
+    const oscillator = this.context.createOscillator();
+    const envelope = this.context.createGain();
+    oscillator.type = type;
+    oscillator.frequency.setValueAtTime(frequency, time);
+    if (endingFrequency) oscillator.frequency.exponentialRampToValueAtTime(endingFrequency, time + duration);
+    envelope.gain.setValueAtTime(0.0001, time);
+    envelope.gain.exponentialRampToValueAtTime(Math.max(0.0002, peak), time + Math.min(0.012, duration / 4));
+    envelope.gain.exponentialRampToValueAtTime(0.0001, time + duration);
+    oscillator.connect(envelope);
+    envelope.connect(this.musicBus);
+    oscillator.start(time);
+    oscillator.stop(time + duration + 0.01);
+    oscillator.onended = () => { oscillator.disconnect(); envelope.disconnect(); };
   }
 
-  private clearAmbientTimer(): void {
-    if (this.ambientTimer) clearInterval(this.ambientTimer);
-    this.ambientTimer = null;
+  private scheduleMusic(): void {
+    if (!this.context || !this.musicTimer && !this.musicWanted) return;
+    const eighth = 60 / 116 / 2;
+    // F - Dm - Bb - C, two bars per chord; accents shift in the second half.
+    const bass = [174.61, 146.83, 116.54, 130.81];
+    const arpeggio = [
+      [349.23, 440, 523.25, 440],
+      [293.66, 349.23, 440, 349.23],
+      [233.08, 293.66, 349.23, 293.66],
+      [261.63, 329.63, 392, 329.63],
+    ];
+    const melody = [
+      [698.46, 0, 783.99, 880, 0, 783.99, 698.46, 0],
+      [659.25, 0, 698.46, 783.99, 0, 698.46, 587.33, 0],
+      [587.33, 0, 698.46, 783.99, 0, 698.46, 587.33, 0],
+      [659.25, 0, 783.99, 880, 0, 783.99, 1046.5, 0],
+    ];
+    while (this.nextMusicTime < this.context.currentTime + 0.32) {
+      const step = this.nextMusicStep % 64;
+      const chord = Math.floor(step / 16);
+      const beat = step % 8;
+      const time = this.nextMusicTime;
+      if (beat % 2 === 0) {
+        const arpeggioIndex = Math.floor(step / 2) % 4;
+        this.musicNote(arpeggio[chord][arpeggioIndex], time, 0.18, 0.032, 'triangle');
+      }
+      const lead = melody[chord][beat];
+      if (lead && (Math.floor(step / 8) % 2 === 0 || beat !== 6)) this.musicNote(lead, time, 0.13, 0.036, 'sine');
+      if (beat === 0 || beat === 4) {
+        this.musicNote(bass[chord], time, 0.3, 0.06, 'triangle');
+        this.musicNote(105, time, 0.1, 0.065, 'sine', 50);
+      }
+      if (beat === 2 || beat === 6) this.musicNote(320, time, 0.04, 0.018, 'triangle', 190);
+      if (step % 2 === 1) this.musicNote(1600, time, 0.022, 0.008, 'sine');
+      this.nextMusicStep += 1;
+      this.nextMusicTime += eighth;
+    }
   }
 
-  stopAmbient(): void { this.ambientWanted = false; this.clearAmbientTimer(); }
+  private pauseSoundtrack(): void {
+    if (this.musicTimer) clearInterval(this.musicTimer);
+    this.musicTimer = null;
+    this.musicBus?.gain.setTargetAtTime(0, this.context?.currentTime ?? 0, 0.04);
+  }
+
+  stopSoundtrack(): void { this.musicWanted = false; this.pauseSoundtrack(); }
+
+  // Keep the older game call sites working while the soundtrack spans the whole visit.
+  startAmbient(): void { this.startSoundtrack(); }
+  stopAmbient(): void { /* The visit-level soundtrack continues through results and rematches. */ }
 
   attack(family: AttackFamily): void {
     const now = typeof performance !== 'undefined' ? performance.now() : Date.now();
@@ -185,12 +255,10 @@ export class PlayhouseAudio {
   }
 
   win(): void {
-    this.stopAmbient();
     [523.25, 659.25, 783.99, 1046.5].forEach((frequency, index) => this.tone(frequency, 0.32, 0.13, 'triangle', index * 0.14));
   }
 
   lose(): void {
-    this.stopAmbient();
     [392, 293.66, 196].forEach((frequency, index) => this.tone(frequency, 0.34, 0.11, 'sine', index * 0.2));
   }
 
@@ -199,11 +267,12 @@ export class PlayhouseAudio {
   }
 
   async dispose(): Promise<void> {
-    this.stopAmbient();
+    this.stopSoundtrack();
     if (typeof document !== 'undefined') document.removeEventListener('visibilitychange', this.handleVisibility);
     await this.context?.close();
     this.context = null;
     this.master = null;
+    this.musicBus = null;
     this.settings.unlocked = false;
     this.announce();
   }

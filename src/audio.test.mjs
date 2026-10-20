@@ -26,3 +26,54 @@ test('sound calls remain silent until a browser user gesture unlocks audio', asy
   assert.equal(audio.getSettings().muted, true);
   await audio.dispose();
 });
+
+test('one unlocked soundtrack starts, pauses on mute and hidden tab, and resumes', async () => {
+  const previousWindow = globalThis.window;
+  const previousDocument = globalThis.document;
+  let voices = 0;
+  const parameter = () => ({ value: 0, setValueAtTime() {}, exponentialRampToValueAtTime() {}, setTargetAtTime() {} });
+  class FakeAudioContext {
+    currentTime = 0;
+    destination = {};
+    state = 'running';
+    createGain() { return { gain: parameter(), connect() {}, disconnect() {} }; }
+    createOscillator() {
+      voices += 1;
+      return { frequency: parameter(), connect() {}, disconnect() {}, start() {}, stop() {}, onended: null };
+    }
+    async resume() { this.state = 'running'; }
+    async close() { this.state = 'closed'; }
+  }
+  const listeners = new Map();
+  globalThis.window = {
+    AudioContext: FakeAudioContext,
+    localStorage: { getItem() { return null; }, setItem() {} },
+  };
+  globalThis.document = {
+    hidden: false,
+    addEventListener(name, listener) { listeners.set(name, listener); },
+    removeEventListener(name) { listeners.delete(name); },
+  };
+  const audio = new PlayhouseAudio();
+  try {
+    assert.equal(await audio.unlock(), true);
+    assert.ok(voices > 0, 'music is scheduled after the gesture');
+    const firstVoices = voices;
+    audio.startAmbient();
+    assert.equal(voices, firstVoices, 'rematch does not create a second loop');
+    audio.setMuted(true);
+    await new Promise((resolve) => setTimeout(resolve, 100));
+    assert.equal(voices, firstVoices, 'mute stops scheduling music');
+    audio.setMuted(false);
+    assert.ok(voices > firstVoices, 'unmute resumes music');
+    const resumedVoices = voices;
+    globalThis.document.hidden = true;
+    listeners.get('visibilitychange')();
+    await new Promise((resolve) => setTimeout(resolve, 100));
+    assert.equal(voices, resumedVoices, 'hidden tab stops scheduling music');
+  } finally {
+    await audio.dispose();
+    globalThis.window = previousWindow;
+    globalThis.document = previousDocument;
+  }
+});

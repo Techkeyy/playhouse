@@ -1,35 +1,35 @@
-export const WIDTH=900, HEIGHT=500, ROUND_MS=45_000;
+export const WIDTH=900, MOBILE_WIDTH=450, HEIGHT=500, ROUND_MS=45_000;
 type Vec={x:number;y:number};
 export type AttackFamily='pulse'|'falling'|'sweep'|'orbit';
 type Shot=Vec & {vx:number;vy:number;r:number;kind:AttackFamily;motif:string;age:number;telegraph:number;dodged:boolean};
 export type GameState={elapsed:number;player:Vec;hp:number;score:number;hits:number;dodges:number;shots:Shot[];lastSpawn:number;waves:number;lastFamily:AttackFamily;lastMotif:string;invulnerable:number;done:boolean;won:boolean;move:Vec;target:Vec|null};
-export function newGame():GameState{return {elapsed:0,player:{x:450,y:410},hp:3,score:0,hits:0,dodges:0,shots:[],lastSpawn:0,waves:0,lastFamily:'pulse',lastMotif:'',invulnerable:0,done:false,won:false,move:{x:0,y:0},target:null};}
+export function newGame(width=WIDTH):GameState{return {elapsed:0,player:{x:width/2,y:410},hp:3,score:0,hits:0,dodges:0,shots:[],lastSpawn:0,waves:0,lastFamily:'pulse',lastMotif:'',invulnerable:0,done:false,won:false,move:{x:0,y:0},target:null};}
 const clamp=(n:number,a:number,b:number)=>Math.max(a,Math.min(b,n));
 const dist=(a:Vec,b:Vec)=>Math.hypot(a.x-b.x,a.y-b.y);
 export const heatPhase=(elapsed:number)=>elapsed>=30_000?2:elapsed>=15_000?1:0;
 export const spawnCadence=(elapsed:number,level:number)=>Math.max(400,840-heatPhase(elapsed)*125-(Math.max(1,Math.min(level,12))-1)*39);
 const signatureFamily:Record<string,AttackFamily>={'coin-rain':'falling','token-rain':'falling','gold-rain':'falling','trait-rain':'falling','cell-bars':'sweep','frost-sweep':'sweep','stripe-sweep':'sweep','body-sweep':'sweep','visor-scan':'sweep','rally-orbit':'orbit','spell-orbit':'orbit','round-gaze':'orbit','aura-spiral':'orbit','eye-orbit':'orbit','ember-burst':'pulse','joy-pulse':'pulse','headwear-burst':'pulse'};
-export function advance(g:GameState,dtMs:number,families:string[],level:number,signatureId=''):GameState{
+export function advance(g:GameState,dtMs:number,families:string[],level:number,signatureId='',width=WIDTH):GameState{
  if(g.done)return g;
  const dt=Math.min(dtMs,50)/1000;
  g.elapsed+=dt*1000; g.invulnerable=Math.max(0,g.invulnerable-dt*1000);
  const dx=g.target?g.target.x-g.player.x:g.move.x;
  const dy=g.target?g.target.y-g.player.y:g.move.y;
  const len=Math.hypot(dx,dy);
- if(len>0.01){const speed=g.target?Math.min(330,len/dt):330;g.player.x=clamp(g.player.x+dx/len*speed*dt,22,WIDTH-22);g.player.y=clamp(g.player.y+dy/len*speed*dt,215,HEIGHT-22);}
+ if(len>0.01){const speed=g.target?Math.min(330,len/dt):330;g.player.x=clamp(g.player.x+dx/len*speed*dt,22,width-22);g.player.y=clamp(g.player.y+dy/len*speed*dt,215,HEIGHT-22);}
  const phase=heatPhase(g.elapsed),cadence=spawnCadence(g.elapsed,level);
  if(g.elapsed-g.lastSpawn>cadence){
    g.lastSpawn=g.elapsed;const count=g.waves;const family=(families[g.waves%Math.max(families.length,1)]||'pulse') as AttackFamily;g.waves++;
    g.lastFamily=family;const motif=signatureFamily[signatureId]===family?signatureId:'';g.lastMotif=motif;
    const speed=220+phase*24+(Math.max(1,Math.min(level,12))-1)*9;
-   const bossX=450+Math.sin(g.elapsed/1000*2.1)*19,attackY=185;
+   const bossX=width/2+Math.sin(g.elapsed/1000*2.1)*19,attackY=185;
    const telegraph=650-phase*55;
    const emit=(x:number,y:number,vx:number,vy:number,r:number,kind:AttackFamily,delayMs=0)=>g.shots.push({x,y,vx,vy,r,kind,motif,age:-delayMs,telegraph,dodged:false});
    if(family==='falling'){
-     const x=clamp(g.player.x,60,WIDTH-60);const cascade=['coin-rain','token-rain','gold-rain','trait-rain'].includes(motif);const offsets=cascade?[-136,-68,0,68,136]:phase===0?[-100,0,100]:phase===1?[-140,-70,0,70,140]:[-175,-105,-35,35,105,175];
-     offsets.forEach((offset,i)=>emit(clamp(x+offset,25,WIDTH-25),attackY,0,speed,phase===2?16:15,'falling',cascade?i*75:0));
+     const x=clamp(g.player.x,45,width-45);const cascade=['coin-rain','token-rain','gold-rain','trait-rain'].includes(motif);const offsets=cascade?[-136,-68,0,68,136]:phase===0?[-100,0,100]:phase===1?[-140,-70,0,70,140]:[-175,-105,-35,35,105,175];
+     offsets.forEach((offset,i)=>emit(clamp(x+offset*(width/WIDTH),25,width-25),attackY,0,speed,phase===2?16:15,'falling',cascade?i*75:0));
    }else if(family==='sweep'){
-     const fromLeft=count%2===0;const lanes=phase===2?5:4;const alternating=['cell-bars','frost-sweep','stripe-sweep','body-sweep'].includes(motif);for(let i=0;i<lanes;i++){const left=alternating?i%2===0:fromLeft;emit(left?-25:WIDTH+25,215+i*(phase===2?62:78),left?speed*1.2:-speed*1.2,0,alternating?21:17,'sweep',alternating?i*65:0);}
+     const fromLeft=count%2===0;const lanes=phase===2?5:4;const alternating=['cell-bars','frost-sweep','stripe-sweep','body-sweep'].includes(motif);for(let i=0;i<lanes;i++){const left=alternating?i%2===0:fromLeft;emit(left?-25:width+25,215+i*(phase===2?62:78),left?speed*1.2:-speed*1.2,0,alternating?21:17,'sweep',alternating?i*65:0);}
    }else if(family==='orbit'){
      const base=count*1.13,n=(motif?7:5)+phase*2;for(let i=0;i<n;i++){const a=base+i*Math.PI*2/n;emit(bossX,attackY,Math.cos(a)*speed*.84,Math.sin(a)*speed*.84,12,'orbit',motif?i*55:0);}
    }else{
@@ -44,7 +44,7 @@ export function advance(g:GameState,dtMs:number,families:string[],level:number,s
    if(gap<shot.r+14&&g.invulnerable===0){g.hp--;g.hits++;g.invulnerable=1000;shot.y=HEIGHT+100;}
    else if(!shot.dodged&&gap<shot.r+35&&gap>=shot.r+14){shot.dodged=true;g.dodges++;g.score+=15;}
  }
- g.shots=g.shots.filter(s=>s.x>-60&&s.x<WIDTH+60&&s.y<HEIGHT+60);
+ g.shots=g.shots.filter(s=>s.x>-60&&s.x<width+60&&s.y<HEIGHT+60);
  g.score+=Math.round(dt*100);
  if(g.hp<=0||g.elapsed>=ROUND_MS){g.done=true;g.won=g.hp>0&&g.elapsed>=ROUND_MS;g.score+=g.won?500:0;}
  return g;
@@ -65,12 +65,12 @@ export function bossPose(g:GameState,reducedMotion=false){
  return {x:450+Math.sin(t*2.1)*22,y:94+Math.sin(t*3.4)*9+lunge,lean:g.lastFamily==='sweep'?Math.sin(t*2.1)*.16:g.lastFamily==='orbit'?Math.sin(t*3)*.13:Math.sin(t*2.5)*.08,pulse:Math.sin(t*5)*5};
 }
 export function drawGame(ctx:CanvasRenderingContext2D,g:GameState,boss:HTMLImageElement|null,arenaTheme:string,auraTrait:string,reducedMotion=false,signatureId=''){
- const c=ctx.canvas;ctx.clearRect(0,0,c.width,c.height);
+ const c=ctx.canvas,width=c.width;ctx.clearRect(0,0,c.width,c.height);
  const hash=[...arenaTheme].reduce((n,ch)=>n+ch.charCodeAt(0),0),hue=190+hash%95;
- const grad=ctx.createLinearGradient(0,0,0,HEIGHT);grad.addColorStop(0,`hsl(${hue} 36% 25%)`);grad.addColorStop(1,`hsl(${hue} 40% 11%)`);ctx.fillStyle=grad;ctx.fillRect(0,0,WIDTH,HEIGHT);
- ctx.strokeStyle='rgba(203,238,255,.13)';ctx.lineWidth=1;for(let x=0;x<WIDTH;x+=50){ctx.beginPath();ctx.moveTo(x,0);ctx.lineTo(x,HEIGHT);ctx.stroke();}for(let y=0;y<HEIGHT;y+=50){ctx.beginPath();ctx.moveTo(0,y);ctx.lineTo(WIDTH,y);ctx.stroke();}
- ctx.fillStyle='rgba(10,20,31,.56)';ctx.fillRect(0,0,WIDTH,205);
- const attackAge=g.waves?g.elapsed-g.lastSpawn:Infinity,{x:bossX,y:bossY,lean,pulse}=bossPose(g,reducedMotion),aura=auraHue(auraTrait);
+ const grad=ctx.createLinearGradient(0,0,0,HEIGHT);grad.addColorStop(0,`hsl(${hue} 36% 25%)`);grad.addColorStop(1,`hsl(${hue} 40% 11%)`);ctx.fillStyle=grad;ctx.fillRect(0,0,width,HEIGHT);
+ ctx.strokeStyle='rgba(203,238,255,.13)';ctx.lineWidth=1;for(let x=0;x<width;x+=50){ctx.beginPath();ctx.moveTo(x,0);ctx.lineTo(x,HEIGHT);ctx.stroke();}for(let y=0;y<HEIGHT;y+=50){ctx.beginPath();ctx.moveTo(0,y);ctx.lineTo(width,y);ctx.stroke();}
+ ctx.fillStyle='rgba(10,20,31,.56)';ctx.fillRect(0,0,width,205);
+ const attackAge=g.waves?g.elapsed-g.lastSpawn:Infinity,{x:poseX,y:bossY,lean,pulse}=bossPose(g,reducedMotion),bossX=poseX+(width-WIDTH)/2,aura=auraHue(auraTrait);
  if(attackAge<380&&!reducedMotion){ctx.beginPath();ctx.arc(bossX,bossY,86+attackAge*.14,0,Math.PI*2);ctx.strokeStyle=`hsla(${aura},95%,75%,${.65*(1-attackAge/380)})`;ctx.lineWidth=5;ctx.stroke();}
  ctx.save();ctx.translate(bossX,bossY);
  ctx.shadowColor=`hsl(${aura} 90% 65%)`;ctx.shadowBlur=28+pulse;ctx.fillStyle=`hsla(${aura},85%,65%,.28)`;ctx.fillRect(-82,-82,164,164);ctx.shadowBlur=0;
@@ -86,9 +86,9 @@ export function drawGame(ctx:CanvasRenderingContext2D,g:GameState,boss:HTMLImage
  else{ctx.fillStyle='#21314b';ctx.fillRect(-69,-69,138,138);ctx.fillStyle='#fff';ctx.textAlign='center';ctx.font='bold 23px system-ui';ctx.fillText('CHOG',0,7);}
  ctx.strokeStyle='#fff2bb';ctx.lineWidth=4;ctx.strokeRect(-73,-73,146,146);ctx.restore();
  ctx.textAlign='left';ctx.font='bold 13px system-ui';ctx.fillStyle='#f8d777';ctx.fillText(`HEAT ${heatPhase(g.elapsed)+1}/3`,20,29);ctx.fillStyle='#d8ebf5';ctx.fillText(g.lastFamily.toUpperCase(),20,51);ctx.font='bold 12px system-ui';ctx.fillText((g.lastMotif||signatureId).replaceAll('-',' ').toUpperCase(),20,72);
- for(const s of g.shots){if(s.age<s.telegraph){const alpha=.2+.5*Math.max(0,s.age)/s.telegraph;const tellHue=['coin-rain','token-rain','gold-rain'].includes(s.motif)?45:s.motif==='frost-sweep'?190:s.motif==='stripe-sweep'?150:s.kind==='sweep'?18:s.kind==='orbit'?275:45;ctx.strokeStyle=`hsla(${tellHue},90%,73%,${alpha})`;ctx.lineWidth=s.kind==='sweep'?4:3;if(['cell-bars','frost-sweep','stripe-sweep','body-sweep'].includes(s.motif)){ctx.fillStyle=`hsla(${tellHue},90%,65%,${alpha*.12})`;ctx.fillRect(0,s.y-12,WIDTH,24);}ctx.setLineDash([9,7]);ctx.beginPath();ctx.moveTo(s.x,s.y);
+ for(const s of g.shots){if(s.age<s.telegraph){const alpha=.2+.5*Math.max(0,s.age)/s.telegraph;const tellHue=['coin-rain','token-rain','gold-rain'].includes(s.motif)?45:s.motif==='frost-sweep'?190:s.motif==='stripe-sweep'?150:s.kind==='sweep'?18:s.kind==='orbit'?275:45;ctx.strokeStyle=`hsla(${tellHue},90%,73%,${alpha})`;ctx.lineWidth=s.kind==='sweep'?4:3;if(['cell-bars','frost-sweep','stripe-sweep','body-sweep'].includes(s.motif)){ctx.fillStyle=`hsla(${tellHue},90%,65%,${alpha*.12})`;ctx.fillRect(0,s.y-12,width,24);}ctx.setLineDash([9,7]);ctx.beginPath();ctx.moveTo(s.x,s.y);
      if(s.kind==='falling')ctx.lineTo(s.x,HEIGHT);
-     else if(s.kind==='sweep')ctx.lineTo(s.vx>0?WIDTH:0,s.y);
+     else if(s.kind==='sweep')ctx.lineTo(s.vx>0?width:0,s.y);
      else {const endY=s.vy>0?HEIGHT:0,scale=(endY-s.y)/(Math.abs(s.vy)<1?1:s.vy);ctx.lineTo(s.x+s.vx*scale,endY);}
      ctx.stroke();ctx.setLineDash([]);continue;}
    ctx.save();ctx.shadowBlur=18;
@@ -98,6 +98,6 @@ export function drawGame(ctx:CanvasRenderingContext2D,g:GameState,boss:HTMLImage
    else if(s.motif==='headwear-burst'||s.motif==='ember-burst'){ctx.fillStyle=s.motif==='ember-burst'?'#ff805e':'#ffcb88';ctx.shadowColor=ctx.fillStyle;ctx.beginPath();ctx.moveTo(s.x,s.y-s.r-3);ctx.lineTo(s.x+s.r+3,s.y);ctx.lineTo(s.x,s.y+s.r+3);ctx.lineTo(s.x-s.r-3,s.y);ctx.closePath();ctx.fill();}
    else{ctx.beginPath();ctx.arc(s.x,s.y,s.r,0,Math.PI*2);ctx.fillStyle=s.kind==='falling'?'#8fe5ea':s.kind==='sweep'?'#f8ae74':s.kind==='orbit'?'#b99aff':'#ef87ac';ctx.shadowColor=ctx.fillStyle;ctx.fill();}ctx.restore();}
  if(!(g.invulnerable>0&&Math.floor(g.invulnerable/100)%2===0)){ctx.beginPath();ctx.arc(g.player.x,g.player.y,15,0,Math.PI*2);ctx.fillStyle='#8fe5ea';ctx.shadowColor='#8fe5ea';ctx.shadowBlur=20;ctx.fill();ctx.shadowBlur=0;ctx.strokeStyle='#fff';ctx.lineWidth=3;ctx.stroke();}
- if(g.invulnerable>730){ctx.fillStyle=`rgba(255,86,105,${(g.invulnerable-730)/270*.22})`;ctx.fillRect(0,0,WIDTH,HEIGHT);}
+ if(g.invulnerable>730){ctx.fillStyle=`rgba(255,86,105,${(g.invulnerable-730)/270*.22})`;ctx.fillRect(0,0,width,HEIGHT);}
  ctx.textAlign='left';ctx.fillStyle='#eef8ff';ctx.font='bold 15px system-ui';ctx.fillText('MOVE: WASD / ARROWS / DRAG',20,HEIGHT-18);
 }

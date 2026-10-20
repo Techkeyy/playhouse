@@ -1,6 +1,6 @@
 import {useCallback,useEffect,useRef,useState} from 'react';
 import {getChog,getChogs,saveBattle,startBattle,type BattleSummary,type Chog} from './api';
-import {advance,drawGame,HEIGHT,newGame,ROUND_MS,WIDTH,type GameState} from './game';
+import {advance,drawGame,HEIGHT,MOBILE_WIDTH,newGame,ROUND_MS,WIDTH,type GameState} from './game';
 import OwnerControls from './OwnerControls';
 import {playhouseAudio} from './audio';
 import {ArrowIcon,AttackDiagram,BrandGlyph,ScrollProgressGraphic,SoundIcon} from './PlayhouseVisuals';
@@ -10,21 +10,25 @@ const short=(address:string)=>address?`${address.slice(0,6)}...${address.slice(-
 const round=(n:number)=>Math.floor(n).toLocaleString();
 
 function Arena({chog,onFinish,onStarted}:{chog:Chog;onFinish:(g:GameState)=>void;onStarted:()=>void}){
- const canvas=useRef<HTMLCanvasElement>(null);const state=useRef(newGame());const image=useRef<HTMLImageElement|null>(null);const keys=useRef(new Set<string>());const callback=useRef(onFinish);const audioCount=useRef({waves:0,dodges:0,hits:0});
+ const worldWidth=useRef(window.matchMedia('(max-width: 720px) and (orientation: portrait)').matches?MOBILE_WIDTH:WIDTH).current;
+ const canvas=useRef<HTMLCanvasElement>(null);const state=useRef(newGame(worldWidth));const image=useRef<HTMLImageElement|null>(null);const keys=useRef(new Set<string>());const callback=useRef(onFinish);const audioCount=useRef({waves:0,dodges:0,hits:0});const touchStart=useRef<{id:number;x:number;y:number;playerX:number;playerY:number}|null>(null);
  const [hud,setHud]=useState({time:45,hp:3,score:0,dodges:0});
  const [started,setStarted]=useState(false);
+ const [arenaSound,setArenaSound]=useState(playhouseAudio.getSettings());
+ useEffect(()=>playhouseAudio.subscribe(setArenaSound),[]);
  useEffect(()=>{callback.current=onFinish},[onFinish]);
  useEffect(()=>{const im=new Image();im.onload=()=>{const ctx=canvas.current?.getContext('2d');if(ctx&&!state.current.elapsed)drawGame(ctx,state.current,im,chog.bossProfile.arenaTheme,String(chog.traits.find(t=>t.trait_type.toLowerCase()==='aura')?.value||''),true,chog.bossProfile.signature?.id);};im.src=chog.imageUrl;image.current=im;},[chog.imageUrl]);
  useEffect(()=>{
    if(!started){const ctx=canvas.current?.getContext('2d');if(ctx)drawGame(ctx,state.current,image.current,chog.bossProfile.arenaTheme,String(chog.traits.find(t=>t.trait_type.toLowerCase()==='aura')?.value||''),true,chog.bossProfile.signature?.id);return;}
    const down=(e:KeyboardEvent)=>{if(['ArrowUp','ArrowDown','ArrowLeft','ArrowRight',' '].includes(e.key))e.preventDefault();keys.current.add(e.key.toLowerCase());};
    const up=(e:KeyboardEvent)=>keys.current.delete(e.key.toLowerCase());window.addEventListener('keydown',down);window.addEventListener('keyup',up);
+   const blur=()=>{keys.current.clear();state.current.target=null;};window.addEventListener('blur',blur);
    let raf=0,last=performance.now(),lastHud=0;const ctx=canvas.current!.getContext('2d')!;
    const tick=(now:number)=>{const dt=now-last;last=now;const g=state.current;const held=keys.current;
      g.move.x=Number(held.has('arrowright')||held.has('d'))-Number(held.has('arrowleft')||held.has('a'));
      g.move.y=Number(held.has('arrowdown')||held.has('s'))-Number(held.has('arrowup')||held.has('w'));
      if(g.move.x||g.move.y)g.target=null;
-     advance(g,dt,chog.bossProfile.attackFamilies,chog.stats.level,chog.bossProfile.signature?.id);drawGame(ctx,g,image.current,chog.bossProfile.arenaTheme,String(chog.traits.find(t=>t.trait_type.toLowerCase()==='aura')?.value||''),window.matchMedia('(prefers-reduced-motion: reduce)').matches,chog.bossProfile.signature?.id);
+     advance(g,dt,chog.bossProfile.attackFamilies,chog.stats.level,chog.bossProfile.signature?.id,worldWidth);drawGame(ctx,g,image.current,chog.bossProfile.arenaTheme,String(chog.traits.find(t=>t.trait_type.toLowerCase()==='aura')?.value||''),window.matchMedia('(prefers-reduced-motion: reduce)').matches,chog.bossProfile.signature?.id);
      if(g.waves>audioCount.current.waves)playhouseAudio.attack(g.lastFamily);
      if(g.dodges>audioCount.current.dodges)playhouseAudio.dodge();
      if(g.hits>audioCount.current.hits)playhouseAudio.hit();
@@ -32,16 +36,24 @@ function Arena({chog,onFinish,onStarted}:{chog:Chog;onFinish:(g:GameState)=>void
      if(now-lastHud>100){lastHud=now;setHud({time:Math.max(0,Math.ceil((ROUND_MS-g.elapsed)/1000)),hp:g.hp,score:g.score,dodges:g.dodges});}
      if(g.done){playhouseAudio.stopAmbient();g.won?playhouseAudio.win():playhouseAudio.lose();callback.current({...g});return;}raf=requestAnimationFrame(tick);
    };raf=requestAnimationFrame(tick);
-   return()=>{cancelAnimationFrame(raf);playhouseAudio.stopAmbient();window.removeEventListener('keydown',down);window.removeEventListener('keyup',up);};
+   return()=>{cancelAnimationFrame(raf);playhouseAudio.stopAmbient();window.removeEventListener('keydown',down);window.removeEventListener('keyup',up);window.removeEventListener('blur',blur);keys.current.clear();};
  },[started,chog.tokenId,chog.bossProfile.attackFamilies,chog.bossProfile.signature?.id,chog.stats.level]);
- const startRound=()=>{void playhouseAudio.unlock();playhouseAudio.startAmbient();onStarted();setStarted(true);requestAnimationFrame(()=>canvas.current?.scrollIntoView({behavior:window.matchMedia('(prefers-reduced-motion: reduce)').matches?'auto':'smooth',block:'center'}));};
- const pointer=(e:React.PointerEvent<HTMLCanvasElement>)=>{const rect=e.currentTarget.getBoundingClientRect();state.current.target={x:(e.clientX-rect.left)/rect.width*WIDTH,y:(e.clientY-rect.top)/rect.height*HEIGHT};};
- return <section className="fight" aria-label={`Fight ${chog.name}`}>
+ const startRound=()=>{void playhouseAudio.unlock();playhouseAudio.startAmbient();onStarted();setStarted(true);if(worldWidth===WIDTH)requestAnimationFrame(()=>canvas.current?.scrollIntoView({behavior:window.matchMedia('(prefers-reduced-motion: reduce)').matches?'auto':'smooth',block:'center'}));};
+ const pointer=(e:React.PointerEvent<HTMLCanvasElement>)=>{const rect=e.currentTarget.getBoundingClientRect();if(e.pointerType==='touch'){
+   if(e.type==='pointerdown')touchStart.current={id:e.pointerId,x:e.clientX,y:e.clientY,playerX:state.current.player.x,playerY:state.current.player.y};
+   const start=touchStart.current;if(start?.id!==e.pointerId)return;
+   state.current.target={x:Math.max(22,Math.min(worldWidth-22,start.playerX+(e.clientX-start.x)/rect.width*worldWidth)),y:Math.max(215,Math.min(HEIGHT-22,start.playerY+(e.clientY-start.y)/rect.height*HEIGHT))};
+ }else state.current.target={x:(e.clientX-rect.left)/rect.width*worldWidth,y:(e.clientY-rect.top)/rect.height*HEIGHT};};
+ const releasePointer=(e:React.PointerEvent<HTMLCanvasElement>)=>{if(touchStart.current?.id===e.pointerId)touchStart.current=null;state.current.target=null;};
+ const holdDirection=(key:string)=>(e:React.PointerEvent<HTMLButtonElement>)=>{e.preventDefault();e.currentTarget.setPointerCapture(e.pointerId);keys.current.add(key);state.current.target=null;};
+ const releaseDirection=(key:string)=>(e:React.PointerEvent<HTMLButtonElement>)=>{e.preventDefault();keys.current.delete(key);};
+ return <section className={`fight${started?' is-active':''}${worldWidth===MOBILE_WIDTH?' mobile-play':''}`} aria-label={`Fight ${chog.name}`}>
    <div className="fight-head"><div><span className="eyebrow">LIVE ROUND</span><h2>{chog.name}</h2><p>{chog.bossProfile.title} · {chog.bossProfile.arenaTheme} arena</p></div><div className="hud"><span><b>{hud.time}</b> SEC</span><span><b>{'♥'.repeat(Math.max(0,hud.hp))}{'♡'.repeat(3-Math.max(0,hud.hp))}</b> HEALTH</span><span><b>{round(hud.score)}</b> SCORE</span></div></div>
    <div className="fight-guide" aria-label="How to play"><span><strong>Move:</strong> arrows or WASD</span><span><strong>Touch:</strong> drag in the arena</span><span><strong>Dodge:</strong> warning shapes show where attacks will land</span><span><strong>Goal:</strong> survive 45 seconds</span></div>
    {!started&&<div className="fight-ready" role="status"><p>Ready to face {chog.name}? Move into the open space after each warning. Your 45 seconds begin when you press Start.</p><button type="button" className="primary" onClick={startRound}>Start 45-second round →</button></div>}
-   <canvas ref={canvas} width={WIDTH} height={HEIGHT} onPointerDown={e=>{e.currentTarget.setPointerCapture(e.pointerId);pointer(e);}} onPointerMove={e=>{if(e.buttons)pointer(e);}} onPointerUp={()=>{state.current.target=null;}} aria-label="Battle arena. Use arrow keys, WASD, or drag to dodge incoming attacks."/>
-   <div className="arena-foot"><span>Survive 45 seconds. Follow the warning lines, then dodge the attacks. On a phone, rotate to landscape for a larger arena.</span><span>Near dodges: {hud.dodges}</span></div>
+   <canvas ref={canvas} width={worldWidth} height={HEIGHT} onPointerDown={e=>{if(!started)return;e.currentTarget.setPointerCapture(e.pointerId);pointer(e);}} onPointerMove={e=>{if(started&&(e.buttons||touchStart.current?.id===e.pointerId))pointer(e);}} onPointerUp={releasePointer} onPointerCancel={releasePointer} aria-label="Battle arena. Use arrow keys, WASD, or drag to dodge incoming attacks."/>
+   {started&&<div className="touch-controls" aria-label="Touch movement controls"><div className="touch-controls-head"><span>Hold to move</span><button type="button" className="fight-sound" onClick={()=>playhouseAudio.toggleMuted()} aria-label={arenaSound.muted?'Unmute sound':'Mute sound'}><SoundIcon muted={arenaSound.muted} size={17}/>{arenaSound.muted?'Sound off':'Sound on'}</button></div><div className="touch-directions">{([['←','arrowleft','Move left'],['↑','arrowup','Move up'],['↓','arrowdown','Move down'],['→','arrowright','Move right']] as const).map(([symbol,key,label])=><button type="button" key={key} aria-label={label} onPointerDown={holdDirection(key)} onPointerUp={releaseDirection(key)} onPointerCancel={releaseDirection(key)} onLostPointerCapture={releaseDirection(key)}>{symbol}</button>)}</div></div>}
+   <div className="arena-foot"><span>Survive 45 seconds. Follow the warning lines, then dodge the attacks. On a phone, drag in the arena or hold the movement buttons below.</span><span>Near dodges: {hud.dodges}</span></div>
  </section>;
 }
 export default function App(){

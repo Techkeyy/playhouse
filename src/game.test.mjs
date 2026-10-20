@@ -1,6 +1,18 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {advance,auraHue,bossPose,drawGame,newGame,ROUND_MS,spawnCadence} from './game.ts';
+import {advance,auraHue,bossPose,drawGame,MOBILE_WIDTH,newGame,ROUND_MS,spawnCadence} from './game.ts';
+
+test('portrait arena keeps the player, warnings, and attacks inside its narrower world',()=>{
+ const g=newGame(MOBILE_WIDTH);
+ assert.equal(g.player.x,MOBILE_WIDTH/2);
+ g.target={x:999,y:999};advance(g,50,['falling'],1,'coin-rain',MOBILE_WIDTH);
+ assert.ok(g.player.x<=MOBILE_WIDTH-22);
+ assert.ok(g.player.y<=478);
+ g.target=null;
+ for(let i=0;i<20;i++)advance(g,50,['falling'],1,'coin-rain',MOBILE_WIDTH);
+ assert.ok(g.shots.length>0);
+ assert.ok(g.shots.every(s=>s.x>=0&&s.x<=MOBILE_WIDTH));
+});
 
 test('surviving the full active round ends the game',()=>{
  const g=newGame();g.elapsed=ROUND_MS-40;g.lastSpawn=g.elapsed;
