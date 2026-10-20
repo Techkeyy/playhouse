@@ -77,7 +77,7 @@ The last recorded runs passed **19 tests** (8 server, 9 game, 2 audio); `npm run
 ## Try the player flow
 
 1. Open the landing page without connecting a wallet. Choose **Enter Playhouse**, then select a featured boss and compare its traits and named signature attack.
-2. Select **Challenge this Chog**. Move with **WASD**, **arrow keys**, or pointer dragging in the arena. Dodge telegraphed attacks for 45 seconds.
+2. Select **Challenge this Chog**, read the controls, then choose **Start 45-second round** when the arena is visible. Move with **WASD**, **arrow keys**, or pointer dragging in the arena. Dodge telegraphed attacks for 45 seconds.
 3. Review the score, duration, hits, and near dodges. Rematch, or choose another Chog. Reload the boss profile to check that saved history remains.
 
 If the roster cannot load, inspect `/api/doctor`, RPC connectivity, and metadata gateway availability. The app should show a retry option rather than replacing real tokens with invented bosses.

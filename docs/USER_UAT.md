@@ -6,7 +6,7 @@
 
 1. Open the live site in a fresh desktop browser tab. Do not connect a wallet. Confirm the landing explains real NFT bosses and has a working **Enter Playhouse** button. Follow it to the lineup and confirm real Chog images and token IDs load.
 2. Select token **330**, displayed as **CHOG #1791**. Check that traits, owner summary, **Coin Rain** signature from its actual **Dollar Cap** trait, and **Token ID 330** appear. The display name number and token ID differ by design.
-3. Click **Challenge this Chog**. Move with WASD or arrow keys. Confirm the attack warnings are visible and that health, timer, and score change during a round.
+3. Click **Challenge this Chog**. Confirm the ready instructions appear and the timer stays at 45 seconds until you click **Start 45-second round**. Then move with WASD or arrow keys. Confirm the attack warnings are visible and that health, timer, and score change during a round.
 4. Finish or lose the round. Confirm the result and saved status appear. Select **Rematch** and confirm it starts a fresh round.
 5. Return to token 330, reload the page, select it again, and confirm your saved battle remains in Recent battles. Note the score and battle count before and after.
 6. Select the **third featured Chog**, token **1053** (CHOG #545). During its fight, check that its full NFT art moves as an arena sprite, its Aura changes the glow, and the boss reacts when it attacks or takes a hit. The art is a flat NFT image animated as a sprite, so it is not a separately rigged character cutout.
@@ -30,7 +30,7 @@ If you do not own or have authorized access to a Genesis NFT, mark this section 
 ## 4. Mobile and reliability
 
 1. Open the live site on a phone or narrow browser viewport, including **319px and 390px** if using responsive tools. Confirm the landing, header sound toggle, roster, boss detail, owner controls, arena, buttons, and result are readable without horizontal scrolling or clipping.
-2. Start a round and use pointer dragging. Confirm movement and attacks stay responsive and that the round can reach a result.
+2. Open a fight and confirm it waits at the ready screen until you scroll to the arena and click **Start 45-second round**. Use pointer dragging. Confirm movement and attacks stay responsive and that the round can reach a result.
 3. On a narrow phone screen, rotate to landscape and compare the arena size. On the roster page, scroll downward and check that sections reveal without hiding controls or causing horizontal scrolling. If your device uses reduced-motion settings, confirm decorative art motion stops while the attacks remain playable.
 4. Refresh after a saved round and check history. If the host takes time to wake, record how long it took and whether the retry UI worked.
 5. Open the [repository](https://github.com/Techkeyy/playhouse) and confirm its instructions correspond to the live product. Check that the demo video, once made, shows the same build.
