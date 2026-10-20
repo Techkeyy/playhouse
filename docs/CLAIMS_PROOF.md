@@ -1,6 +1,6 @@
 # Playhouse: claims-to-proof ledger
 
-This is a review checklist. The `perfect-readme`, `project-edge`, and `project-audit` skills require the README and submission to match the running product. Current checks: **10 game tests, 9 backend tests, 2 audio tests**, local type check and build, production PostgreSQL health, and deployed browser UAT passed. A real Genesis holder test remains outstanding.
+This is a review checklist to keep the README and submission aligned with the running product. Current checks: **11 game tests, 11 backend tests, 3 audio tests**, local type check and build, production PostgreSQL health, and deployed desktop and narrow-browser play. Fresh production tokens 343–347 loaded through an IPFS gateway; the local keyless check loaded token 342 with OpenSea disabled. Physical phone touch/listening, post-expiry behavior, and a real Genesis holder test remain outstanding.
 
 ## Core user journey to prove
 
@@ -15,13 +15,14 @@ This is a review checklist. The `perfect-readme`, `project-edge`, and `project-a
 | Intended claim | Mechanism that must exist | Proof required before claiming shipped | State |
 | --- | --- | --- | --- |
 | “Real Chog NFTs power the bosses.” | Read Genesis `tokenURI` and metadata/traits from mainnet contract `0xc96d31F8626c6D03Fae5dCD3d61e3FB9F4a73763`; use contract token ID as identity. | Deployed browser loaded six real Chogs, including token 330 (CHOG #1791, 12 traits), and custom lookup loaded token 331 (CHOG #1792). | Deployed verified |
-| “Each Chog fights differently because of its NFT traits.” | Documented deterministic trait-to-attack/arena mapping, applied during gameplay. | Compare two actual mainnet token IDs with different traits; record visible behavior difference and mapping test. | Pending |
+| “Each Chog fights differently because of its NFT traits.” | Documented deterministic trait-to-attack/arena mapping, applied during gameplay. | Tests compare observed featured metadata and attack geometry; deployed profiles display distinct signatures. A complete live fight comparison remains personal UAT. | Tests verified; live comparison pending |
 | “Anyone can play for free without a Chog.” | Visitor launch path requires no wallet, NFT, or payment. | Deployed browser played token 330 without a wallet, saved a 636-point battle, and showed the result after refresh. | Deployed verified |
 | “Bosses evolve based on challengers.” | Battle history keyed by real token ID; level increases after every three battles, accelerating attack cadence. | Backend tests cover history/evolution and one-use sessions/idempotent retry; deployed browser history survived refresh and battle ID 4 survived redeploy. | Deployed persistence verified; long-term load untested |
 | “Battle history stays with the NFT.” | Record keyed by the verified Genesis token ID, independent of owner wallet. | Tests cover transfer simulation and retained history; deployed history persisted through reload and redeploy. | Deployed persistence verified; real transfer untested |
 | “Only the current holder can customize their boss.” | Wallet challenge/signature, server-side mainnet `ownerOf` check on every privileged write, allowed-setting validator. | Signed live-chain nonowner rejected with 403; controlled tests cover owner acceptance and transfer revocation. Real Genesis holder UAT remains. | Authorization verified; live holder pending |
 | “Production supports real Chog holders.” | Mainnet wallet connection, chain guard, exact Genesis address, fresh ownership read, owner settings endpoint. | Deployment configuration and read-only production path verified; real-holder UAT needed to claim full live owner-flow verification. | Pending |
-| “Playable and polished.” | Clear controls, legible attack telegraphs, accessible start/restart, responsive arena. | Deployed browser completed token 330 battle/history refresh and token 331 lookup. Mobile UAT remains. | Deployed desktop verified; mobile pending |
+| “OpenSea expiry does not stop routine NFT reads.” | Read `tokenURI` and `ownerOf` on Monad; resolve metadata through IPFS gateways before optional OpenSea; cache validated metadata. | Keyless local token 342 and fresh production tokens 343–347 using `ipfs.filebase.io/ipfs/` passed after gateway reliability fix. Actual post-expiry behavior remains unobserved. | Primary path verified; post-expiry pending |
+| “Playable and polished.” | Clear controls, legible attack telegraphs, accessible start/restart, responsive arena. | Deployed browser completed token 330 battle/history refresh and token 331 lookup. Narrow-browser portrait play showed visible HUD, hold-to-move input, saved result, and history. Physical phone touch UAT remains. | Deployed browser verified; physical phone pending |
 
 ## Honesty rules
 
