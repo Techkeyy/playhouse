@@ -102,7 +102,7 @@ export default function App(){
     </header>
     {stage==='landing'&&<>
       <section className="landing-hero" aria-labelledby="hero-title">
-        <div className="hero-index"><span>01 / THE BOSS ARCADE</span><span>CHOG GENESIS × MONAD</span></div>
+        <div className="hero-index"><span className="chapter-tag">Welcome to Playhouse</span><span>CHOG GENESIS × MONAD</span></div>
         <div className="landing-copy">
           <div className="hero-copy-block"><span className="eyebrow">REAL NFT. REAL BOSS.</span><h1 id="hero-title">THE NFT<br/><em>FIGHTS BACK.</em></h1><p>Pick a Chog. Read its trait-powered attacks. Survive 45 seconds and change its battle history.</p>
           <div className="landing-actions"><button type="button" className="primary" onClick={openLineup}>Enter the arcade <ArrowIcon size={21}/></button><a className="text-link" href="#how-it-works">See how it works <ArrowIcon direction="down" size={18}/></a></div></div>
@@ -113,20 +113,20 @@ export default function App(){
           <div className="hero-art-frame">{featured&&!featuredImageFailed?<img src={featured.imageUrl} alt={featured.name+' NFT artwork'} onError={()=>setFeaturedImageFailed(true)}/>:<span className="art-loading" role="status">{featured?'Artwork unavailable for '+featured.name:loading?'Finding a Chog...':'Chog artwork unavailable'}</span>}<span className="hero-art-crosshair" aria-hidden="true">+</span></div>
           <div className="feature-caption"><div><strong>{featured?.name||'A Chog is coming'}</strong><span>{featured?.bossProfile.signature?.name||'Trait-built boss'}</span></div><div className="feature-switch"><button type="button" onClick={()=>setFeaturedIndex(i=>i+roster.length-1)} disabled={roster.length<2} aria-label="Previous featured Chog"><ArrowIcon direction="left" size={18}/></button><button type="button" onClick={()=>setFeaturedIndex(i=>i+1)} disabled={roster.length<2} aria-label="Next featured Chog"><ArrowIcon size={18}/></button></div></div>
         </div>
-        <div className="hero-side-note" aria-hidden="true">SCROLL TO DISCOVER / 2026</div>
+        <div className="hero-side-note" aria-hidden="true">SCROLL TO MEET THE CHOGS ↓</div>
       </section>
       <section className="concept-strip" aria-label="What makes Playhouse different"><span>NOT JUST ART</span><BrandGlyph size={26}/><strong>THE CHOG IS THE CHALLENGE.</strong><BrandGlyph size={26}/><span>EVERY FIGHT COUNTS</span></section>
       <section className="landing-how" id="how-it-works" data-reveal>
-        <div className="section-kicker"><span>02 / THE LOOP</span><span>PLAY IN UNDER A MINUTE</span></div>
+        <div className="section-kicker"><span className="chapter-tag">How the game goes</span><span>PLAY IN UNDER A MINUTE</span></div>
         <div className="how-layout"><div className="how-statement"><h2>CHOOSE.<br/>DODGE.<br/><em>RETURN.</em></h2><p>Every Chog is a real token with its own look, traits, owner, and growing record.</p><button type="button" className="inline-action" onClick={openLineup}>Find your boss <ArrowIcon size={20}/></button></div><ol className="how-steps"><li><span>01</span><div><h3>Pick a real Chog</h3><p>Browse the lineup or enter any Chog Genesis token ID. See its NFT art and signature attack before you play.</p></div><ArrowIcon size={18}/></li><li><span>02</span><div><h3>Read the warning</h3><p>Move with arrow keys, WASD, or touch. Attack shapes show where the danger will land.</p></div><ArrowIcon size={18}/></li><li><span>03</span><div><h3>Leave a mark</h3><p>Survive the round, set a score, and add your attempt to this token's permanent battle story.</p></div><ArrowIcon size={18}/></li></ol></div>
       </section>
       <section className="landing-proof" data-reveal>
-        <div className="section-kicker"><span>03 / WHY THE NFT MATTERS</span><span>TRAIT → ATTACK → HISTORY</span></div>
+        <div className="section-kicker"><span className="chapter-tag">The Chog makes the rules</span><span>TRAIT → ATTACK → HISTORY</span></div>
         <div className="proof-layout"><div className="proof-graphic"><AttackDiagram signatureId={featured?.bossProfile.signature?.id} family={featured?.bossProfile.signature?.family}/><span>TRAITS BECOME PATTERNS</span></div><div className="proof-copy"><h2>THE ART HAS<br/><em>TEETH.</em></h2><p>A Chog's real traits determine its signature move. Its onchain token ID carries its battle record. Whoever owns it can tune the next opening attack.</p><p className="proof-note">Anyone can fight. Only the holder can command the boss.</p><button type="button" className="primary" onClick={openLineup}>Choose a Chog <ArrowIcon size={20}/></button></div></div>
       </section>
     </>}
     {stage==='select'&&<>
-      <section className="app-intro"><div className="section-kicker"><span>01 / THE ARCADE</span><button type="button" className="back-link" onClick={goHome}><ArrowIcon direction="left" size={17}/> About Playhouse</button></div><div className="app-intro-main"><div><span className="eyebrow">YOUR NEXT OPPONENT</span><h1>CHOOSE A<br/><em>CHOG.</em></h1></div><p>Every boss below is a real Genesis NFT. Pick one, inspect its signature attack, then step into the arena. No wallet needed.</p></div></section>
+      <section className="app-intro"><div className="section-kicker"><span className="chapter-tag">Step into the arcade</span><button type="button" className="back-link" onClick={goHome}><ArrowIcon direction="left" size={17}/> About Playhouse</button></div><div className="app-intro-main"><div><span className="eyebrow">YOUR NEXT OPPONENT</span><h1>CHOOSE A<br/><em>CHOG.</em></h1></div><p>Every boss below is a real Genesis NFT. Pick one, inspect its signature attack, then step into the arena. No wallet needed.</p></div></section>
       <section className="roster-section" data-reveal><div className="section-kicker"><span>THE LINEUP</span><span>{roster.length?roster.length+' CHOGS READY':'FETCHING REAL TOKENS'}</span></div>
         <div className="roster-topline"><h2>WHO WILL YOU FACE?</h2><p>Choose a featured boss or look up your own token.</p></div>
         <form className="token-lookup" onSubmit={e=>void lookup(e)}><label htmlFor="token-id">Know a Chog token ID?</label><div className="lookup-row"><input id="token-id" inputMode="numeric" pattern="[0-9]*" placeholder="e.g. 330" value={lookupId} onChange={e=>setLookupId(e.target.value)} /><button className="secondary" type="submit" disabled={lookupBusy}>{lookupBusy?'Searching...':'Find Chog'} <ArrowIcon size={17}/></button></div><small>The NFT name number may differ from its onchain token ID.</small>{lookupError&&<p className="owner-error" role="alert">{lookupError}</p>}</form>

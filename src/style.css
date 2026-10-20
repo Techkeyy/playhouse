@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700;800;900&family=Space+Grotesk:wght@400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700;800;900&family=Caveat:wght@600;700&family=Space+Grotesk:wght@400;500;600;700&display=swap');
 :root {
   font-family:'Space Grotesk',Arial,sans-serif;
   color:#11110f;
@@ -56,6 +56,8 @@ button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible{ou
 .primary:disabled,.secondary:disabled{opacity:.58;transform:none;box-shadow:none}
 .eyebrow,.section-kicker,.hero-index,.hero-proof,.feature-caption span,.card-top,.card-body small,.trait-list small,.stat-row span,.result-tally>span,.detail-art-top,.detail-art-bottom{font-size:12px;font-weight:700;letter-spacing:.11em;text-transform:uppercase}
 .section-kicker{display:flex;align-items:center;justify-content:space-between;gap:12px;padding-bottom:11px;border-bottom:2px solid currentColor}
+.chapter-tag{display:inline-flex;align-items:center;gap:8px;font:700 clamp(22px,2.2vw,30px)/1 'Caveat',cursive;letter-spacing:0;text-transform:none;text-decoration:underline wavy var(--accent);text-decoration-thickness:1px;text-underline-offset:6px;transform:rotate(-2deg)}
+.chapter-tag:before{content:'✳';font:700 19px/1 'Space Grotesk',sans-serif;color:var(--accent);text-decoration:none}
 .landing-hero{position:relative;min-height:620px;display:grid;grid-template-columns:minmax(0,1fr) minmax(290px,.7fr);grid-template-rows:auto 1fr;column-gap:clamp(20px,4vw,72px);padding:22px max(24px,4vw) 35px;background:var(--ink);color:var(--white)}
 .hero-index{grid-column:1/-1;display:flex;justify-content:space-between;gap:20px;padding-bottom:10px;border-bottom:1px solid #77766f;color:#ccc8bb}
 .landing-copy{align-self:center;padding:20px 0 12px}
@@ -270,9 +272,9 @@ footer a{display:flex;align-items:center;gap:5px;text-decoration:underline;text-
   .fight.is-active.mobile-play .fight-head{display:grid;grid-template-columns:minmax(0,1fr) auto;align-items:center;gap:7px;padding-bottom:7px}
   .fight.is-active.mobile-play .fight-head h2{font-size:clamp(24px,5vw,32px);line-height:.9;overflow-wrap:anywhere}
   .fight.is-active.mobile-play .fight-head p{display:none}
-  .fight.is-active.mobile-play .eyebrow{font-size:10px}
+  .fight.is-active.mobile-play .eyebrow{font-size:11px}
   .fight.is-active.mobile-play .hud{margin:0;gap:3px}
-  .fight.is-active.mobile-play .hud span{min-width:0;padding:5px 4px;font-size:9px;white-space:nowrap}
+  .fight.is-active.mobile-play .hud span{min-width:0;padding:5px 4px;font-size:11px;white-space:nowrap}
   .fight.is-active.mobile-play .hud b{font-size:20px}
   .fight.is-active.mobile-play .fight-guide,.fight.is-active.mobile-play .arena-foot{display:none}
   .fight.is-active.mobile-play canvas{flex:none;align-self:center;width:min(100%,calc(90dvh - 176px));height:auto;max-height:calc(100dvh - 170px);aspect-ratio:9/10;border-width:2px}
@@ -299,6 +301,8 @@ footer a{display:flex;align-items:center;gap:5px;text-decoration:underline;text-
   .nav-play{padding-inline:9px;font-size:13px}
   .nav-play svg{width:14px}
   .hero-index span:last-child{display:none}
+  .section-kicker{flex-wrap:wrap;row-gap:8px}
+  .chapter-tag{font-size:24px}
   .landing-copy h1{font-size:clamp(3.65rem,13.5vw,5.4rem)}
   .landing-actions .primary{width:100%}
   .hero-proof{gap:5px 10px}
@@ -350,12 +354,12 @@ footer a{display:flex;align-items:center;gap:5px;text-decoration:underline;text-
   .fight.is-active.mobile-play .fight-head h2{font-size:25px;line-height:.9;overflow-wrap:anywhere}
   .fight.is-active.mobile-play .fight-head p,.fight.is-active.mobile-play .fight-guide,.fight.is-active.mobile-play .arena-foot{display:none}
   .fight.is-active.mobile-play .hud{display:flex;flex-direction:column;margin-top:9px;gap:3px}
-  .fight.is-active.mobile-play .hud span{min-width:0;padding:4px;font-size:9px}
+  .fight.is-active.mobile-play .hud span{min-width:0;padding:4px;font-size:11px}
   .fight.is-active.mobile-play .hud b{font-size:19px}
   .fight.is-active.mobile-play canvas{flex:1 1 auto;min-width:0;width:min(100%,calc(90dvh - 14px));max-width:calc(90dvh - 14px);height:auto;max-height:calc(100dvh - 16px);aspect-ratio:9/10;border-width:2px}
   .fight.mobile-play .touch-controls{display:block;flex:0 0 110px;min-width:0}
   .fight.mobile-play .touch-controls-head{display:block}
-  .fight.mobile-play .touch-controls-head span{font-size:10px;margin-bottom:4px}
+  .fight.mobile-play .touch-controls-head span{font-size:11px;margin-bottom:4px}
   .fight.mobile-play .touch-directions{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:4px}
   .fight.mobile-play .touch-directions button{min-height:48px;font-size:22px}
 }

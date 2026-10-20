@@ -10,6 +10,8 @@ type SettingsListener = (settings: AudioSettings) => void;
 
 const STORAGE_KEY = 'playhouse.audio.v1';
 const DEFAULT_VOLUME = 0.55;
+// Raise the music mix for phone speakers while retaining headroom for combat cues.
+const MUSIC_BUS_GAIN = 2.2;
 
 export function clampAudioVolume(value: number): number {
   return Number.isFinite(value) ? Math.min(1, Math.max(0, value)) : DEFAULT_VOLUME;
@@ -147,7 +149,7 @@ export class PlayhouseAudio {
     if (!this.context || !this.musicBus || !this.settings.unlocked || this.settings.muted || !this.settings.ambientEnabled || this.musicTimer || (typeof document !== 'undefined' && document.hidden)) return;
     this.nextMusicStep = 0;
     this.nextMusicTime = this.context.currentTime + 0.05;
-    this.musicBus.gain.setTargetAtTime(0.8, this.context.currentTime, 0.07);
+    this.musicBus.gain.setTargetAtTime(MUSIC_BUS_GAIN, this.context.currentTime, 0.07);
     this.scheduleMusic();
     this.musicTimer = setInterval(() => this.scheduleMusic(), 80);
   }

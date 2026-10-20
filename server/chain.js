@@ -12,6 +12,7 @@ const customGateway = process.env.IPFS_GATEWAY_URL;
 if (customGateway && !/^https:\/\/[^\s/]+(?:\/[^\s]*)?\/ipfs\/$/.test(customGateway)) throw new Error('IPFS_GATEWAY_URL must be an HTTPS URL ending in /ipfs/');
 const gateways = [...new Set([
   customGateway,
+  'https://ipfs.filebase.io/ipfs/',
   'https://gateway.pinata.cloud/ipfs/',
   'https://nftstorage.link/ipfs/',
   'https://ipfs.io/ipfs/'
@@ -32,7 +33,7 @@ function gatewayUrls(uri) {
 }
 
 async function fetchJson(url) {
-  const signal = AbortSignal.timeout(6500);
+  const signal = AbortSignal.timeout(12_000);
   const response = await fetch(url, { signal, headers: { Accept: 'application/json' } });
   if (!response.ok) throw new Error(`metadata HTTP ${response.status}`);
   const length = Number(response.headers.get('content-length') || 0);
@@ -77,17 +78,26 @@ export async function getOwner(tokenId) {
   return (await contract.ownerOf(BigInt(tokenId))).toLowerCase();
 }
 
-export async function fetchFreshMetadata(key) {
-  const uri = await contract.tokenURI(BigInt(key));
+export async function fetchGatewayMetadata(uri, key, fetcher = fetchJson) {
   const attempts = gatewayUrls(uri).map(async url => {
     const gateway = url.includes('/ipfs/') ? url.slice(0, url.indexOf('/ipfs/') + 6) : gateways[0];
-    return normalizeMetadata(await fetchJson(url), key, gateway);
+    return normalizeMetadata(await fetcher(url), key, gateway);
   });
+  return Promise.any(attempts);
+}
+
+export async function fetchFreshMetadata(key, {
+  readUri = id => contract.tokenURI(BigInt(id)),
+  readGateways = fetchGatewayMetadata,
+  readOpenSea = fetchOpenSea,
+  hasOpenSeaKey = Boolean(process.env.OPENSEA_API_KEY)
+} = {}) {
+  const uri = await readUri(key);
   try {
-    return { ...(await Promise.any(attempts)), tokenURI: uri };
+    return { ...(await readGateways(uri, key)), tokenURI: uri };
   } catch (gatewayError) {
-    if (!process.env.OPENSEA_API_KEY) throw gatewayError;
-    return { ...(await fetchOpenSea(key)), tokenURI: uri };
+    if (!hasOpenSeaKey) throw gatewayError;
+    return { ...(await readOpenSea(key)), tokenURI: uri };
   }
 }
 

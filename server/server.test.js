@@ -10,7 +10,7 @@ const directory = mkdtempSync(join(tmpdir(), 'playhouse-test-'));
 delete process.env.DATABASE_URL;
 process.env.PLAYHOUSE_DB_PATH = join(directory, 'test.sqlite');
 const { closeStore, saveBattle, statsFor, historyFor, startBattle, finishBattle, saveMetadata, getCachedMetadata } = await import('./store.js');
-const { normalizeMetadata, resolveWithDurableFallback } = await import('./chain.js');
+const { normalizeMetadata, fetchGatewayMetadata, fetchFreshMetadata, resolveWithDurableFallback } = await import('./chain.js');
 const { issueChallenge, verifyChallenge, requireOwner } = await import('./auth.js');
 
 test('real-shape traits produce deterministic distinct boss rules', () => {
@@ -68,6 +68,35 @@ test('metadata validation rejects blank or invented NFT data', () => {
   assert.equal(good.imageUrl, 'https://dweb.link/ipfs/bafytest/image.png');
   assert.equal(good.tokenId, '330');
   assert.throws(() => normalizeMetadata({ name: 'CHOG', image: 'x', attributes: [] }, '330'), /image/);
+});
+
+test('keyless gateway retrieval survives rate limits and timeouts', async () => {
+  const attempted = [];
+  const uri = 'ipfs://bafyverified/1797.json';
+  const metadata = await fetchGatewayMetadata(uri, '336', async url => {
+    attempted.push(url);
+    if (url.includes('filebase.io')) return { name: 'CHOG #1797', image: 'ipfs://bafyverified/1797.png', attributes: [{ trait_type: 'Head', value: 'Dollar Cap' }] };
+    if (url.includes('pinata.cloud')) throw new DOMException('Timed out', 'TimeoutError');
+    throw new Error('metadata HTTP 429');
+  });
+  assert.equal(metadata.tokenId, '336');
+  assert.equal(metadata.imageUrl, 'https://ipfs.filebase.io/ipfs/bafyverified/1797.png');
+  assert.ok(attempted.some(url => url.includes('pinata.cloud')));
+  assert.ok(attempted.some(url => url.includes('nftstorage.link')));
+  assert.ok(attempted.some(url => url.includes('filebase.io')));
+});
+
+test('expired OpenSea fallback fails closed rather than producing NFT data', async () => {
+  const deps = {
+    readUri: async () => 'ipfs://bafyverified/1797.json',
+    readGateways: async () => { throw new Error('all IPFS gateways unavailable'); },
+    readOpenSea: async () => { throw new Error('OpenSea HTTP 401'); },
+    hasOpenSeaKey: true
+  };
+  await assert.rejects(fetchFreshMetadata('336', deps), /OpenSea HTTP 401/);
+  let openSeaCalled = false;
+  await assert.rejects(fetchFreshMetadata('336', { ...deps, hasOpenSeaKey: false, readOpenSea: async () => { openSeaCalled = true; } }), /IPFS gateways unavailable/);
+  assert.equal(openSeaCalled, false);
 });
 
 test('validated metadata survives provider failure while owner is refreshed', async () => {
