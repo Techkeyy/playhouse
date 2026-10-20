@@ -8,7 +8,7 @@ This is a review checklist to keep the README and submission aligned with the ru
 2. The visitor sees the NFT image, correct **onchain token ID**, traits, readable attack explanation, and an arena shaped by those traits.
 3. The visitor plays a complete 45-second survival round, dodges distinct attacks, sees a result and score, then rematches.
 4. The boss profile shows a persistent battle history and bounded, understandable evolution triggered by actual round outcomes. Reloading does not erase it.
-5. A connected wallet that owns the selected Genesis token can change a permitted boss setting. A nonowner cannot. After a simulated transfer, the new owner gains control and the former owner loses it while history stays with `(chain, contract, tokenId)`.
+5. A connected wallet that owns the selected Genesis token can change a permitted boss setting. A nonowner cannot. After a simulated transfer, the new owner gains control and the former owner loses it while history stays with the Genesis contract token ID. This release supports one fixed chain and contract.
 
 ## Claim → mechanism → proof
 

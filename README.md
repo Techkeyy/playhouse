@@ -130,8 +130,7 @@ The **25 automated tests** exercise these cases. They establish specific behavio
 | `server/chain.js` | Monad Genesis contract reads and metadata normalization. |
 | `server/rules.js` | Trait mapping and battle-result validation. |
 | `server/auth.js` | Wallet challenge verification and current-owner checks. |
-| `server/store.js` | Storage interface choosing PostgreSQL or local SQLite. |
-| `server/db.js` | Local SQLite battle records, settings, challenges, and sessions. |
+| `server/store.js` | Storage interface choosing PostgreSQL or local SQLite, including local SQLite battle records, settings, challenges, and sessions. |
 
 ## Known limits
 
