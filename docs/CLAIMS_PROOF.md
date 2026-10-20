@@ -1,6 +1,6 @@
 # Playhouse: claims-to-proof ledger
 
-This is a review checklist. The `perfect-readme`, `project-edge`, and `project-audit` skills require the README and submission to match the running product. Current checks: **3 game tests, 6 backend tests**, local type check and build, production PostgreSQL health, and deployed browser UAT passed. A real Genesis holder test remains outstanding.
+This is a review checklist. The `perfect-readme`, `project-edge`, and `project-audit` skills require the README and submission to match the running product. Current checks: **10 game tests, 9 backend tests, 2 audio tests**, local type check and build, production PostgreSQL health, and deployed browser UAT passed. A real Genesis holder test remains outstanding.
 
 ## Core user journey to prove
 

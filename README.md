@@ -6,7 +6,7 @@
 
 Built for [Chogathon 2026](https://chogathon.chog.xyz/). The event requires Chog NFTs to be essential, and judges novelty (30%), fun (20%), retention (20%), clarity (15%), and execution (15%).
 
-**Current verification status:** local type check, build, and **19 automated tests** pass (8 server, 9 game, 2 audio). The deployed browser loaded six real Chogs, played token **330** (CHOG #1791), saved a 636-point battle, and showed that result after reload. A custom lookup loaded token **331** (CHOG #1792). Production health reported PostgreSQL storage, and battle ID 4 survived a redeploy. A signed nonowner was rejected by a local HTTP ownership check. The redesigned landing, sound controls, and signature attack visuals have passed local checks but still need browser UAT on the deployed build. **A real Genesis holder has not tested owner controls.** A demo video is still pending.
+**Current verification status:** local type check, build, and **21 automated tests** pass (9 server, 10 game, 2 audio). The deployed browser loaded six real Chogs, played token **330** (CHOG #1791), saved a 636-point battle, and showed that result after reload. A custom lookup loaded token **331** (CHOG #1792). Production health reported PostgreSQL storage, and battle ID 4 survived a redeploy. A signed nonowner was rejected by a local HTTP ownership check. The redesigned landing, sound controls, trait previews, mobile ready screen, active arena, and saved result were checked in the deployed narrow browser; desktop and personal acceptance testing remain pending. **A real Genesis holder has not tested owner controls.** A demo video is still pending.
 
 ## Why this exists
 
@@ -72,7 +72,7 @@ node --test server/server.test.js
 npm run build
 ```
 
-The last recorded runs passed **19 tests** (8 server, 9 game, 2 audio); `npm run check` and `npm run build` also passed. Re-run these commands after any changes. The tests cover trait-specific attack paths, sound gesture gating, metadata validation and fallback, battle history/evolution, one-use battle sessions and idempotent retry, and wallet signature/ownership-transfer simulation. For a read-only live keyless metadata check, run `node server/doctor-keyless.js 335`. The deployed PostgreSQL health check and a saved battle surviving redeploy were verified; these checks are not a real Genesis holder test.
+The last recorded runs passed **21 tests** (9 server, 10 game, 2 audio); `npm run check` and `npm run build` also passed. Re-run these commands after any changes. The tests cover trait-specific attack paths, sound gesture gating, metadata validation and fallback, battle history/evolution, one-use battle sessions and idempotent retry, and wallet signature/ownership-transfer simulation. For a read-only live keyless metadata check, run `node server/doctor-keyless.js 335`. The deployed PostgreSQL health check and a saved battle surviving redeploy were verified; these checks are not a real Genesis holder test.
 
 ## Try the player flow
 
