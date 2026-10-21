@@ -4,14 +4,14 @@ import {advance,auraHue,bossPose,drawGame,MOBILE_WIDTH,newGame,ROUND_MS,spawnCad
 
 test('portrait arena keeps the player, warnings, and attacks inside its narrower world',()=>{
  const g=newGame(MOBILE_WIDTH);
- assert.equal(g.hp,STARTING_HEALTH,'the balanced round should begin with four hearts');
- assert.equal(STARTING_HEALTH,4);
+ assert.equal(g.hp,STARTING_HEALTH,'the balanced round should begin with five hearts');
+ assert.equal(STARTING_HEALTH,5);
  assert.equal(g.player.x,MOBILE_WIDTH/2);
  g.target={x:999,y:999};advance(g,50,['falling'],1,'coin-rain',MOBILE_WIDTH);
  assert.ok(g.player.x<=MOBILE_WIDTH-22);
  assert.ok(g.player.y<=478);
  g.target=null;
- for(let i=0;i<20;i++)advance(g,50,['falling'],1,'coin-rain',MOBILE_WIDTH);
+ for(let i=0;i<23;i++)advance(g,50,['falling'],1,'coin-rain',MOBILE_WIDTH);
  assert.ok(g.shots.length>0);
  assert.ok(g.shots.every(s=>s.x>=0&&s.x<=MOBILE_WIDTH));
 });
@@ -37,8 +37,8 @@ test('collision removes health once during invulnerability',()=>{
  const startHealth=g.hp;
  advance(g,16,['pulse'],1);assert.equal(g.hp,startHealth-1);
  advance(g,16,['pulse'],1);assert.equal(g.hp,startHealth-1);
- for(let i=0;i<20;i++){g.lastSpawn=g.elapsed;advance(g,50,['pulse'],1);}
- assert.equal(g.hp,startHealth-1,'a second hit should not land within the 1.25 second recovery window');
+ for(let i=0;i<30;i++){g.lastSpawn=g.elapsed;advance(g,50,['pulse'],1);}
+ assert.equal(g.hp,startHealth-1,'a second hit should not land within the 1.7 second recovery window');
  g.shots.push({x:g.player.x,y:g.player.y,vx:0,vy:0,r:15,kind:'pulse',age:650,telegraph:650,dodged:false});
  for(let i=0;i<5;i++){g.lastSpawn=g.elapsed;advance(g,50,['pulse'],1);}
  assert.equal(g.hp,startHealth-2,'the player becomes vulnerable again after recovery');
@@ -47,27 +47,27 @@ test('collision removes health once during invulnerability',()=>{
 test('trait attack families generate visibly different paths',()=>{
  const patterns=new Map();
  for(const family of ['pulse','falling','sweep','orbit']){
-   const g=newGame();for(let i=0;i<23;i++)advance(g,50,[family],1);
+   const g=newGame();for(let i=0;i<25;i++)advance(g,50,[family],1);
    patterns.set(family,g.shots.map(s=>`${Math.round(s.x)},${Math.round(s.y)}:${Math.round(s.vx)},${Math.round(s.vy)}`).join('|'));
  }
  assert.equal(new Set(patterns.values()).size,4);
 });
 
 test('battle pressure ramps with time and token history',()=>{
- assert.equal(spawnCadence(0,1),1000);
- assert.equal(spawnCadence(16_000,1),890);
- assert.equal(spawnCadence(31_000,1),780);
- assert.equal(spawnCadence(31_000,12),480);
+ assert.equal(spawnCadence(0,1),1120);
+ assert.equal(spawnCadence(16_000,1),1000);
+ assert.equal(spawnCadence(31_000,1),860);
+ assert.equal(spawnCadence(31_000,12),662);
  assert.ok(spawnCadence(0,1)>spawnCadence(16_000,1));
  assert.ok(spawnCadence(16_000,1)>spawnCadence(31_000,1));
  assert.ok(spawnCadence(0,1)>spawnCadence(0,5));
- const early=newGame();for(let i=0;i<21;i++)advance(early,50,['falling'],1);
+ const early=newGame();for(let i=0;i<24;i++)advance(early,50,['falling'],1);
  const late=newGame();late.elapsed=31_000;late.lastSpawn=30_000;advance(late,50,['falling'],1);
  assert.ok(late.shots.length>early.shots.length);
 });
 
 test('first attack honors the real trait-derived family order',()=>{
- const g=newGame();for(let i=0;i<21;i++)advance(g,50,['orbit','pulse'],1);
+ const g=newGame();for(let i=0;i<24;i++)advance(g,50,['orbit','pulse'],1);
  assert.equal(g.lastFamily,'orbit');
  assert.ok(g.shots.every(s=>s.kind==='orbit'));
 });
@@ -97,7 +97,7 @@ test('arena draws the full NFT image as a character sprite without cropping',()=
 });
 
 test('featured trait signatures change attack geometry, timing, and symbols',()=>{
- const launch=(family,signature)=>{const g=newGame();for(let i=0;i<21;i++)advance(g,50,[family],1,signature);return g;};
+ const launch=(family,signature)=>{const g=newGame();for(let i=0;i<24;i++)advance(g,50,[family],1,signature);return g;};
  const coin=launch('falling','coin-rain'),cell=launch('sweep','cell-bars'),rally=launch('orbit','rally-orbit');
  assert.equal(coin.lastMotif,'coin-rain');
  assert.equal(cell.lastMotif,'cell-bars');
@@ -116,11 +116,43 @@ test('nonfeatured semantic signatures keep four distinct attack mechanics',()=>{
  const cases=[['spell-orbit','orbit'],['frost-sweep','sweep'],['token-rain','falling'],['headwear-burst','pulse']];
  const shapes=new Set();
  for(const [signature,family] of cases){
-   const g=newGame();for(let i=0;i<21;i++)advance(g,50,[family],1,signature);
+   const g=newGame();for(let i=0;i<24;i++)advance(g,50,[family],1,signature);
    assert.equal(g.lastMotif,signature);
    assert.ok(g.shots.length>0);
    shapes.add(g.shots.map(s=>`${Math.sign(s.vx)},${Math.sign(s.vy)},${Math.round(s.r)},${Math.round(s.age)}`).join('|'));
  }
  assert.equal(shapes.size,4);
- assert.ok(spawnCadence(0,1)<=1000,'a new boss should apply pressure from the opening phase');
+ assert.ok(spawnCadence(0,1)<=1200,'a new boss should apply pressure from the opening phase');
+});
+
+test('opening attacks give a readable warning while later heat still ramps up',()=>{
+ const opening=newGame();for(let i=0;i<24;i++)advance(opening,50,['pulse'],1);
+ assert.equal(opening.waves,1);
+ assert.ok(opening.shots.every(s=>s.telegraph===820&&s.age<s.telegraph));
+ assert.ok(opening.shots.every(s=>Math.hypot(s.vx,s.vy)<=209));
+ const mid=newGame();mid.elapsed=16_000;mid.lastSpawn=15_000;advance(mid,50,['pulse'],1);
+ assert.equal(mid.shots[0].telegraph,750);
+ const final=newGame();final.elapsed=31_000;final.lastSpawn=30_000;advance(final,50,['pulse'],1);
+ assert.equal(final.shots[0].telegraph,650);
+ assert.equal(spawnCadence(31_000,12),662);
+ assert.equal(spawnCadence(0,7),1012);
+ assert.ok(spawnCadence(0,12)<spawnCadence(0,1),'experienced bosses still attack faster');
+ const evolved=newGame();for(let i=0;i<21;i++)advance(evolved,50,['pulse'],7);
+ assert.equal(evolved.waves,1,'an evolved boss still starts attacking promptly');
+ assert.equal(evolved.shots[0].telegraph,820);
+ assert.ok(Math.hypot(evolved.shots[0].vx,evolved.shots[0].vy)<250,'opening projectile speed tapers at higher levels');
+});
+
+test('near dodges restore one heart after ten and never exceed starting health',()=>{
+ const g=newGame();g.hp=3;
+ for(let i=0;i<9;i++)g.shots.push({x:g.player.x+40,y:g.player.y,vx:0,vy:0,r:15,kind:'pulse',age:650,telegraph:650,dodged:false});
+ advance(g,16,['pulse'],1);
+ assert.equal(g.dodges,9);assert.equal(g.hp,3);
+ g.shots.push({x:g.player.x+40,y:g.player.y,vx:0,vy:0,r:15,kind:'pulse',age:650,telegraph:650,dodged:false});
+ advance(g,16,['pulse'],1);
+ assert.equal(g.dodges,10);assert.equal(g.hp,4);
+ g.hp=STARTING_HEALTH;g.dodges=19;
+ g.shots.push({x:g.player.x+40,y:g.player.y,vx:0,vy:0,r:15,kind:'pulse',age:650,telegraph:650,dodged:false});
+ advance(g,16,['pulse'],1);
+ assert.equal(g.hp,STARTING_HEALTH);
 });
