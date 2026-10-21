@@ -1,15 +1,15 @@
 # Playhouse: Chogathon submission draft
 
-Optional preparation for the project owner, based on the [official challenge, deliverables, and judging page](https://chogathon.chog.xyz/) and [dashboard](https://chogathon.chog.xyz/dashboard). Submission closes **23 October 2026 at 15:00 UTC**. Dashboard requirements: one project per team, banner, description up to **8,000 characters**, project links, and a demo video on **YouTube or Google Drive** of no more than **3 minutes**. **The user must personally test and accept the product, then submit it. This draft is not user acceptance, submission authorization, or a ready-to-submit verdict.** Use [USER_UAT.md](USER_UAT.md) to record that review.
+Optional preparation for the project owner, based on the [official challenge, deliverables, and judging page](https://chogathon.chog.xyz/) and [dashboard](https://chogathon.chog.xyz/dashboard). When checked on 19 October 2026, the dashboard listed a **23 October 2026, 15:00 UTC** submission deadline and required one project per team, a banner, a description up to **8,000 characters**, project links, and a demo video on **YouTube or Google Drive** of no more than **3 minutes**. Recheck the live dashboard before submitting. **The user must personally test and accept the product, then submit it. This draft is not user acceptance or submission authorization.** Use [USER_UAT.md](USER_UAT.md) to record that review.
 
 ## Project and links
 
 - **Name:** Playhouse
 - **Live game:** https://playhouse-chogathon.onrender.com/
 - **Public repository:** https://github.com/Techkeyy/playhouse
-- **Video:** [ADD PUBLIC YOUTUBE OR VIEWABLE GOOGLE DRIVE URL AFTER RECORDING]
+- **Video:** A 106.5-second final cut exists locally as `Playhouse_Demo_Final.mp4`. [ADD PUBLIC YOUTUBE OR VIEWABLE GOOGLE DRIVE URL AFTER UPLOAD AND SIGNED-OUT ACCESS CHECK]
 - **Team members, Discord handles, X handles:** [USER TO FILL]
-- **Banner:** [USER TO UPLOAD; CHECK IT MATCHES THE LIVE GAME]
+- **Banner:** [Upload the finished 1672 × 941 PNG](assets/playhouse-chogathon-banner.png) and check its crop in the project preview. The characters are illustrative campaign art; the game displays genuine Chog NFT art.
 
 ## Paste-ready description (well under 8,000 characters)
 
@@ -23,7 +23,7 @@ Playhouse focuses on a new role for a collectible: it becomes a public opponent 
 
 The live game has been browser-tested on Render: six genuine Chogs loaded; token 330 (display name CHOG #1791) played a round, saved a result, and showed it after refresh; lookup also loaded nonfeatured token 331 (CHOG #1792) with its image, traits, and owner. A narrow-browser portrait round showed the larger arena, visible HUD, working hold-to-move input, a saved result, and history. The production API reported PostgreSQL storage, and a saved battle survived a redeploy. Local type check, build, and **26 automated tests** passed (11 server, 12 game, 3 audio). The tests include trait rules, battle session retry, history and level behavior, soundtrack lifecycle, gateway failures, signature checks, and transfer revocation.
 
-**Current limits:** Battle scores are reported by the client. Timing and one-use session checks reject some invalid submissions, but the server does not replay a round or provide cheat-resistant rankings. Owner controls are implemented and tested with a simulated transfer and a local HTTP nonowner rejection; no real Genesis holder has completed the production owner journey. The authorized free OpenSea metadata key expires **26 October 2026 at 09:32 UTC**, during judging. Direct onchain `tokenURI` and IPFS metadata loading work without that key; the production retest loaded fresh tokens 343–347 through an IPFS gateway after one earlier transient 503 exposed gateway reliability. The code also stores verified metadata for previously loaded tokens. Post-expiry behavior remains unobserved. An uncached token can fail when all fresh metadata sources fail, a cached image URL can stop serving artwork, and owner controls still require live Monad reads. Physical phone touch and listening checks remain for personal UAT. We have no public-user feedback to report yet; the usage above is team UAT. Future work is stronger score verification and holder-led balance testing.
+**Current limits:** Battle scores are reported by the client. Timing and one-use session checks reject some invalid submissions, but the server does not replay a round or provide cheat-resistant rankings. Owner controls are implemented and tested with a simulated transfer and a local HTTP nonowner rejection; no real Genesis holder has completed the production owner journey. OpenSea is an optional metadata fallback after direct onchain `tokenURI` and IPFS loading. Keyless local token **349** loaded with real traits and current ownership, while fresh production tokens **343–348** loaded through IPFS after a gateway timeout fix. We have not verified the current Render key or its expiry. An uncached token can fail if all metadata sources fail; a cached image URL can stop serving artwork; owner controls still need live Monad reads. Physical phone touch and listening checks remain for personal UAT. We have no public-user feedback to report yet; the usage above is team UAT. Future work is stronger score verification and holder-led balance testing.
 
 **Tech stack:** React, TypeScript, Vite, Node.js, ethers, Monad mainnet reads, PostgreSQL in production and SQLite locally. The NFT metadata comes from the token URI through IPFS gateways, with a server-side OpenSea API fallback. Genesis contract: `0xc96d31F8626c6D03Fae5dCD3d61e3FB9F4a73763`.
 
@@ -38,19 +38,9 @@ The live game has been browser-tested on Render: six genuine Chogs loaded; token
 5. Use the custom token lookup for **331**. Its display name is CHOG #1792; compare the token ID, traits, image, and boss profile. Token display names are not the contract token IDs.
 6. Optional holder path: if you own a Genesis NFT, select its onchain ID, connect your Monad mainnet wallet in **Verify owner wallet**, sign the Playhouse challenge, choose an available first attack, and save. A nonowner cannot complete the setting change. This live holder path has not yet been exercised by the team.
 
-## Demo video shot plan (about 2 minutes 30 seconds)
+## Finished demo video
 
-| Time | Screen and narration |
-| --- | --- |
-| 0:00–0:15 | Homepage and roster. “Every real Chog NFT becomes a boss anyone can fight.” Show no wallet connection. |
-| 0:15–0:35 | Select token 330. Show display name **CHOG #1791**, onchain ID **330**, traits, owner, attack profile, and contract link if visible. Explain the display-name/ID difference. |
-| 0:35–1:25 | Start the fight. Show telegraphed attacks and movement. Use a genuine recorded attempt; edit the video for pace, but do not fake the result. |
-| 1:25–1:45 | Result and saved status, then reload and show the same battle in history. Explain token-specific persistence and level progression. |
-| 1:45–2:05 | Lookup token 331, show a different profile and attack family. Explain that traits are input to the deterministic boss rules. |
-| 2:05–2:25 | Show owner-control UI and describe signature plus fresh `ownerOf` check. Label the live holder path **untested**, and mention simulated-transfer/nonowner proof. |
-| 2:25–2:30 | Close on the playable URL and repository. |
-
-Record the actual deployed site, keep the final video under three minutes, and verify that its URL opens for a signed-out judge.
+The final cut is **106.5 seconds**, 1920 × 1080 at 30 fps. It shows the live roster and trait-driven bosses, genuine token 331 and 330 fight footage, HEAT 2/3 proof, an authentic **1,830-point loss** and saved history, a second token comparison, the holder UI with the genuine-holder UAT caveat, mobile play, and the live URL. The soundtrack and sound accents are editorial audio because the browser captures did not record Web Audio. The final video was checked for full decode, black frames, loudness, and audio sync; the user still needs to listen and approve it. Upload it to YouTube or Google Drive and verify that the link opens for a signed-out judge before placing it in the form or README.
 
 ## Final fields to complete before submission
 

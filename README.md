@@ -10,6 +10,10 @@ For Chog fans who want to do more with a collectible than view its image or trad
 
 Built for [Chogathon 2026](https://chogathon.chog.xyz/). The event requires Chog NFTs to be essential, and judges novelty (30%), fun (20%), retention (20%), clarity (15%), and execution (15%).
 
+![Playhouse campaign art: two collectible bosses attack across an arcade arena](docs/assets/playhouse-chogathon-banner.png)
+
+*Illustrative campaign art. The game loads genuine Chog Genesis artwork for each playable boss.*
+
 ## Why this exists
 
 An NFT usually has an image, a set of traits, and an owner. Those facts can be interesting, but they rarely give people a reason to interact with that *particular* token. Playhouse gives each Chog a second life as an opponent. Its artwork appears in the arena; its traits decide the move set; its onchain ID anchors a growing fight record; and its current holder can choose the first move from that Chog's allowed attacks.
@@ -58,7 +62,7 @@ The profile is deterministic rather than randomly generated or AI written. For e
 
 ## What has been verified
 
-Local type check, build, and **26 automated tests** pass (11 server, 12 game, 3 audio). The deployed browser loaded six real Chogs, played token **330** (CHOG #1791), saved a battle, and showed the result after reload. A custom lookup loaded token **331** (CHOG #1792). Production health reported PostgreSQL storage, and a saved battle survived a redeploy. After a metadata-gateway fix, six fresh production token lookups (**343–348**) each returned HTTP 200; local keyless token **342** also loaded with the OpenSea key removed. A signed nonowner was rejected by a local HTTP ownership check. Desktop and narrow-browser play were checked. **Personal acceptance on a physical phone and the complete production owner journey with a genuine Genesis holder remain untested.** A demo video is pending.
+The **26 automated tests**, type check, and production build pass (11 server tests, 12 game tests, 3 audio tests). The deployed browser loaded six real Chogs, played token **330** (CHOG #1791), saved a battle, and showed the result after reload. A custom lookup loaded token **331** (CHOG #1792). Production health reported PostgreSQL storage, and a saved battle survived a redeploy. After a metadata-gateway fix, six fresh production token lookups (**343–348**) each returned HTTP 200. A keyless local check loaded token **349** with its live owner and 11 traits while `OPENSEA_API_KEY` was unset. A signed nonowner was rejected by a local HTTP ownership check. Desktop and narrow-browser play were checked. A **106.5-second demo video** has been rendered from genuine gameplay, including a saved loss, mobile play, and an explicit real-holder UAT caveat; a public YouTube or Google Drive link has not yet been provided. **Personal acceptance on a physical phone and the complete production owner journey with a genuine Genesis holder remain untested.**
 
 ## Run locally
 
@@ -97,7 +101,7 @@ The API reads a local `.env.local` file if present. It is ignored by Git. The fo
 | --- | --- | --- |
 | `MONAD_RPC_URL` | `https://rpc.monad.xyz` | Monad mainnet JSON-RPC endpoint. |
 | `IPFS_GATEWAY_URL` | unset | Optional HTTPS IPFS gateway URL ending in `/ipfs/`, tried before public gateways. |
-| `OPENSEA_API_KEY` | unset | Optional server-side metadata fallback when IPFS gateways are unavailable. The free key used for this build expires **26 October 2026 at 09:32 UTC**. Direct onchain `tokenURI` and IPFS metadata loading do not require it. Do not expose it to Vite or commit it. |
+| `OPENSEA_API_KEY` | unset | Optional server-side metadata fallback when IPFS gateways are unavailable. Direct onchain `tokenURI` and IPFS metadata loading do not require a key. If configured, use a currently valid key; do not expose it to Vite or commit it. |
 | `PORT` | `8787` | API listen port. Vite's proxy is fixed to 8787 unless `vite.config.ts` is updated. |
 | `PLAYHOUSE_DB_PATH` | `data/playhouse.sqlite` | Local SQLite file path when `DATABASE_URL` is unset. |
 | `DATABASE_URL` | unset | PostgreSQL connection URL. When set, the API uses PostgreSQL instead of local SQLite; intended for durable Render storage. |
@@ -170,17 +174,17 @@ The **26 automated tests** exercise these cases. They establish specific behavio
 - Owner authentication currently uses EOA `personal_sign`; smart contract wallets are not covered by the tested flow.
 - Boss evolution currently means a level increase after every three recorded battles and a faster attack cadence. It is deterministic and is not machine learning.
 - Mainnet owner controls are designed around the real Genesis contract, but the team has no Genesis NFT and cannot claim a completed real-holder production test unless a holder actually participates.
-- [OpenSea instant keys expire after seven days](https://docs.opensea.io/reference/api-keys); this build's key expires **26 October 2026 at 09:32 UTC**. Playhouse reads the contract's `tokenURI` and tries IPFS gateways before the optional OpenSea fallback. An earlier fresh production lookup returned HTTP 503 when gateways timed out; the gateway list and timeout were updated. Six subsequently uncached production tokens (**343–348**) loaded successfully with image URLs on `ipfs.filebase.io`, and local token **342** loaded with the OpenSea key removed. The database stores validated metadata for previously loaded tokens as an outage fallback. The production checks show that fresh loading now works, while the local check proves the direct keyless path; **post-expiry production behavior is not yet verified**. The app cannot discover an uncached token if every gateway fails, guarantee that a cached image URL still serves artwork, or replace the live Monad `ownerOf` check.
+- NFT metadata is read from the contract's `tokenURI` through IPFS gateways first. OpenSea is an optional fallback, not a requirement to play. A keyless local check loaded uncached token **349** with a live owner and 11 traits; fresh production tokens **343–348** loaded through an IPFS gateway after a timeout fix. Previously validated metadata can be reused during a provider outage, but an uncached token cannot load if every metadata source fails, and a cached image URL may stop serving artwork. Current ownership still requires a live Monad `ownerOf` read. [OpenSea instant keys expire after seven days](https://docs.opensea.io/reference/api-keys); any configured key has its own validity period. We have not independently verified which key, if any, is currently set on Render.
 - The API uses local SQLite by default and PostgreSQL with `DATABASE_URL`. Production PostgreSQL health and a battle surviving redeploy were checked; long-term durability under load has not been tested.
 - Deployed nonholder browser UAT passed for a round, save, history refresh, and custom token lookup. A narrow-browser round included movement and a saved result. Physical phone touch and listening checks remain for personal UAT. A real Genesis holder has not completed owner-control UAT.
 
 ## Sources and disclosure
 
 - [Chogathon challenge, submission fields, and judging rubric](https://chogathon.chog.xyz/)
-- [Chogathon dashboard](https://chogathon.chog.xyz/dashboard): submission closes **23 October 2026, 15:00 UTC**; its **How it works** panel specifies the banner, 8,000-character description, and video host/length limits.
+- [Chogathon dashboard](https://chogathon.chog.xyz/dashboard): the **How it works** panel specified a banner, 8,000-character description, and YouTube or Google Drive video of up to three minutes when checked on 19 October 2026. Check the live dashboard for the current deadline.
 - [Chog Genesis collection](https://opensea.io/collection/chog-genesis) and [MonadScan mint transaction](https://monadscan.com/tx/0x730195964d4ec7cfba5b460cad486b5c35356d0edabc3b88506c4547c64bc6d9) verifying contract `0xc96d31F8626c6D03Fae5dCD3d61e3FB9F4a73763`.
 - [Monad mainnet documentation](https://docs.monad.xyz/developer-essentials/network-information).
 
-The [submission draft](docs/SUBMISSION.md) is preparation only. The project owner must complete the pre-existing-work disclosure, personal UAT, and submission fields. A demo video is omitted until one exists and opens for a signed-out judge.
+The [submission draft](docs/SUBMISSION.md) is preparation only. The project owner must complete the pre-existing-work disclosure, personal UAT, and submission fields. The finished local demo needs a public YouTube or Google Drive URL that opens for a signed-out judge before that link can be added here.
 
 **License:** No license file is currently published. The project owner should choose one if public reuse is intended.

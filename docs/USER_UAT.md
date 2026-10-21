@@ -33,8 +33,8 @@ If you do not own or have authorized access to a Genesis NFT, mark this section 
 2. Open a fight and confirm it waits at the ready screen until you click **Start 45-second round**. During a portrait round, the timer, health, and score should remain visible above a large arena, with four movement buttons below. Hold each button to move and release to stop. Drag on the arena too; your finger should not need to cover the player. Confirm attack warnings and movement stay responsive until the round reaches a result.
 3. During a phone round, use the in-round sound control and confirm it mutes both music and effects. Rotate once and check that the arena keeps its proportions and remains playable. On the roster page, scroll downward and check that sections reveal without hiding controls or causing horizontal scrolling. If your device uses reduced-motion settings, confirm decorative art motion stops while the attacks remain playable.
 4. Refresh after a saved round and check history. If the host takes time to wake, record how long it took and whether the retry UI worked.
-5. Open the [repository](https://github.com/Techkeyy/playhouse) and confirm its instructions correspond to the live product. Check that the demo video, once made, shows the same build.
-6. Metadata resilience: the authorized free OpenSea key expires **26 October 2026 at 09:32 UTC**, during judging. The current build loaded fresh tokens 343–347 through an IPFS gateway, but post-expiry behavior has not been observed. After expiry, try a real onchain token ID that has not already been loaded into Playhouse; direct `tokenURI` plus IPFS should load it without OpenSea. Reload a previously loaded token such as 330 and confirm its profile still loads. Check that its **current owner** is read from Monad. A never-loaded token may fail if all metadata sources are unavailable, and a cached image URL may stop displaying; record either result honestly.
+5. Open the [repository](https://github.com/Techkeyy/playhouse) and confirm its instructions correspond to the live product. Watch the finished 106.5-second demo video and check that its gameplay, result, owner caveat, and mobile view match the current build. Check the public video URL from a signed-out browser after upload.
+6. Metadata resilience: OpenSea is an optional fallback, and any configured API key has its own validity period. A keyless local check loaded onchain token 349 with real traits and current ownership; fresh production tokens 343–348 loaded through IPFS after a gateway timeout fix. If possible, try a real onchain token ID not already loaded into Playhouse while OpenSea is unavailable. Direct `tokenURI` plus IPFS should load it. Reload a previously loaded token such as 330 and confirm its profile still loads. Check that its **current owner** is read from Monad. A never-loaded token may fail if all metadata sources are unavailable, and a cached image URL may stop displaying; record either result honestly.
 
 ## Results to fill in personally
 
@@ -54,7 +54,7 @@ If you do not own or have authorized access to a Genesis NFT, mark this section 
 | Landing to lineup to result transitions at 319px and 390px |  |  |
 | Scroll reveal and reduced-motion behavior |  |  |
 | Repository/video match live build |  |  |
-| Cached token after OpenSea key expiry/unavailability |  |  |
+| Fresh and cached token with OpenSea unavailable |  |  |
 
 **Tested by:** [your name]  
 **Date and timezone:** [fill in]  
