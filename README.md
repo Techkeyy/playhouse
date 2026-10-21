@@ -1,6 +1,6 @@
 # Playhouse
 
-**[Play the live game](https://playhouse-chogathon.onrender.com/)** · **[Source code](https://github.com/Techkeyy/playhouse)**
+**[Play the live game](https://playhouse-chogathon.onrender.com/)** · **[Watch the 106-second demo](https://youtu.be/ypz7_tm6R8A)** · **[Source code](https://github.com/Techkeyy/playhouse)**
 
 **A Chog NFT becomes a boss you can fight, level up, and meet again.** Pick a real Chog Genesis token, learn the attacks its traits produce, and try to survive its 45-second arena. Anyone can play; the current NFT holder can steer which permitted attack opens the fight.
 
@@ -8,7 +8,7 @@ For Chog fans who want to do more with a collectible than view its image or trad
 
 > *What if the Chog you collected could become the opponent everyone remembers fighting?*
 
-Built for [Chogathon 2026](https://chogathon.chog.xyz/). The event requires Chog NFTs to be essential, and judges novelty (30%), fun (20%), retention (20%), clarity (15%), and execution (15%).
+Submitted to [Chogathon 2026](https://chogathon.chog.xyz/). The event requires Chog NFTs to be essential, and judges novelty (30%), fun (20%), retention (20%), clarity (15%), and execution (15%).
 
 ![Playhouse campaign art: two collectible bosses attack across an arcade arena](docs/assets/playhouse-chogathon-banner.png)
 
@@ -62,7 +62,7 @@ The profile is deterministic rather than randomly generated or AI written. For e
 
 ## What has been verified
 
-The **26 automated tests**, type check, and production build pass (11 server tests, 12 game tests, 3 audio tests). The deployed browser loaded six real Chogs, played token **330** (CHOG #1791), saved a battle, and showed the result after reload. A custom lookup loaded token **331** (CHOG #1792). Production health reported PostgreSQL storage, and a saved battle survived a redeploy. After a metadata-gateway fix, six fresh production token lookups (**343–348**) each returned HTTP 200. A keyless local check loaded token **349** with its live owner and 11 traits while `OPENSEA_API_KEY` was unset. A signed nonowner was rejected by a local HTTP ownership check. Desktop and narrow-browser play were checked. A **106.5-second demo video** has been rendered from genuine gameplay, including a saved loss, mobile play, and an explicit real-holder UAT caveat; a public YouTube or Google Drive link has not yet been provided. **Personal acceptance on a physical phone and the complete production owner journey with a genuine Genesis holder remain untested.**
+The **26 automated tests**, type check, and production build pass (11 server tests, 12 game tests, 3 audio tests). The deployed browser loaded six real Chogs, played token **330** (CHOG #1791), saved a battle, and showed the result after reload. A custom lookup loaded token **331** (CHOG #1792). Production health reported PostgreSQL storage, and a saved battle survived a redeploy. After a metadata-gateway fix, six fresh production token lookups (**343–348**) each returned HTTP 200. A keyless local check loaded token **349** with its live owner and 11 traits while `OPENSEA_API_KEY` was unset. A signed nonowner was rejected by a local HTTP ownership check. Desktop and narrow-browser play were checked. The [106.5-second demo](https://youtu.be/ypz7_tm6R8A) shows genuine gameplay, a saved loss, mobile play, and the owner-control interface. The recorded verification does not include a physical-phone run or a complete production owner journey with a genuine Genesis holder.
 
 ## Run locally
 
@@ -132,7 +132,7 @@ Enable sound with a click or tap. Browsers do not allow autoplay before a user g
 
 ## Verify owner controls
 
-The owner journey is separate from open play. For a real Genesis holder: connect the wallet that currently owns the selected token, request a challenge, sign the exact message, choose one of that boss's permitted attacks, and save it. A fresh `ownerOf` read at the protected write must reject a nonowner or a previous owner after transfer. We do not own or borrow a Genesis NFT; controlled NFT and local-chain tests can verify the logic, but cannot substitute for a real-holder mainnet UAT.
+The owner journey is separate from open play. For a real Genesis holder: connect the wallet that currently owns the selected token, request a challenge, sign the exact message, choose one of that boss's permitted attacks, and save it. A fresh `ownerOf` read at the protected write rejects a nonowner or a previous owner after transfer. Controlled NFT and local-chain tests cover this logic; a documented real-holder mainnet run remains outstanding.
 
 The API routes are `POST /api/auth/challenge`, `POST /api/auth/verify`, and `POST /api/chogs/:tokenId/settings`. The browser owner controls exist, and tests cover authentication and simulated ownership transfer. A real Genesis holder has not exercised the complete production flow.
 
@@ -173,8 +173,8 @@ The **26 automated tests** exercise these cases. They establish specific behavio
 - The API accepts client-reported battle scores and durations. Session timing and duplicate checks block some invalid submissions, but the server does not replay rounds or prevent a determined caller from forging a result. Treat public records as playful history, not cheat-resistant rankings.
 - Owner authentication currently uses EOA `personal_sign`; smart contract wallets are not covered by the tested flow.
 - Boss evolution currently means a level increase after every three recorded battles and a faster attack cadence. It is deterministic and is not machine learning.
-- Mainnet owner controls are designed around the real Genesis contract, but the team has no Genesis NFT and cannot claim a completed real-holder production test unless a holder actually participates.
-- NFT metadata is read from the contract's `tokenURI` through IPFS gateways first. OpenSea is an optional fallback, not a requirement to play. A keyless local check loaded uncached token **349** with a live owner and 11 traits; fresh production tokens **343–348** loaded through an IPFS gateway after a timeout fix. Previously validated metadata can be reused during a provider outage, but an uncached token cannot load if every metadata source fails, and a cached image URL may stop serving artwork. Current ownership still requires a live Monad `ownerOf` read. The project owner reports replacing the original short-lived OpenSea key on Render with one valid for multiple years; key rotation and its exact expiry are managed in the OpenSea developer dashboard.
+- Mainnet owner controls use the real Genesis contract, but a documented production session with a genuine Genesis holder is still needed to verify the complete browser journey.
+- NFT metadata is read from the contract's `tokenURI` through IPFS gateways first. OpenSea is an optional fallback, not a requirement to play. A keyless local check loaded uncached token **349** with a live owner and 11 traits; fresh production tokens **343–348** loaded through an IPFS gateway after a timeout fix. Previously validated metadata can be reused during a provider outage, but an uncached token cannot load if every metadata source fails, and a cached image URL may stop serving artwork. Current ownership still requires a live Monad `ownerOf` read. A longer-lived OpenSea fallback key is configured on Render; standard NFT reads do not depend on it.
 - The API uses local SQLite by default and PostgreSQL with `DATABASE_URL`. Production PostgreSQL health and a battle surviving redeploy were checked; long-term durability under load has not been tested.
 - Deployed nonholder browser UAT passed for a round, save, history refresh, and custom token lookup. A narrow-browser round included movement and a saved result. Physical phone touch and listening checks remain for personal UAT. A real Genesis holder has not completed owner-control UAT.
 
@@ -185,6 +185,4 @@ The **26 automated tests** exercise these cases. They establish specific behavio
 - [Chog Genesis collection](https://opensea.io/collection/chog-genesis) and [MonadScan mint transaction](https://monadscan.com/tx/0x730195964d4ec7cfba5b460cad486b5c35356d0edabc3b88506c4547c64bc6d9) verifying contract `0xc96d31F8626c6D03Fae5dCD3d61e3FB9F4a73763`.
 - [Monad mainnet documentation](https://docs.monad.xyz/developer-essentials/network-information).
 
-The [submission draft](docs/SUBMISSION.md) is preparation only. The project owner must complete the pre-existing-work disclosure, personal UAT, and submission fields. The finished local demo needs a public YouTube or Google Drive URL that opens for a signed-out judge before that link can be added here.
-
-**License:** No license file is currently published. The project owner should choose one if public reuse is intended.
+**License:** No license file is currently published.
