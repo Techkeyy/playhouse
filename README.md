@@ -91,7 +91,7 @@ Invoke-RestMethod http://localhost:8787/api/health
 Invoke-RestMethod http://localhost:8787/api/doctor
 ```
 
-The development-only `/api/doctor` endpoint checks the configured Monad network and sample Chog metadata. `/api/health` checks that the API and storage connection respond. For a keyless live metadata check, run `node server/doctor-keyless.js 342`; that check still needs working Monad RPC and an IPFS gateway.
+The development-only `/api/doctor` endpoint checks the configured Monad network and sample Chog metadata. `/api/health` checks that the API and storage connection respond. For a keyless live metadata check, run `node server/doctor-keyless.js 349`; that check still needs working Monad RPC and an IPFS gateway.
 
 ### Configuration
 
