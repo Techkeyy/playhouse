@@ -16,14 +16,87 @@ test('portrait arena keeps the player, warnings, and attacks inside its narrower
  assert.ok(g.shots.every(s=>s.x>=0&&s.x<=MOBILE_WIDTH));
 });
 
-test('portrait falling columns leave real dodge gaps in the final heat phase',()=>{
- const g=newGame(MOBILE_WIDTH);g.elapsed=31_000;g.lastSpawn=30_000;
- advance(g,50,['falling'],1,'',MOBILE_WIDTH);
- const columns=[...new Set(g.shots.map(s=>s.x))].sort((a,b)=>a-b);
- assert.equal(columns.length,6);
- for(let i=1;i<columns.length;i++){
-   assert.ok(columns[i]-columns[i-1]>2*(16+14),'each adjacent column needs a gap wider than the player collision diameter');
+function safeIntervals(shots,axis,min,max){
+ const blocks=shots.map(s=>[s[axis]-s.r-14,s[axis]+s.r+14]).sort((a,b)=>a[0]-b[0]);
+ const gaps=[];let cursor=min;
+ for(const [start,end] of blocks){if(start>cursor)gaps.push([cursor,Math.min(max,start)]);cursor=Math.max(cursor,end);}
+ if(cursor<max)gaps.push([cursor,max]);
+ return gaps.filter(([a,b])=>b-a>=40);
+}
+
+test('falling and sweep attacks leave a reachable, human-sized escape route on desktop and mobile',()=>{
+ for(const width of [MOBILE_WIDTH,900])for(const phase of [0,1,2])for(const level of [1,12])for(const [family,motif] of [
+  ['falling',''],['falling','coin-rain'],['sweep',''],['sweep','cell-bars']
+ ])for(const playerX of [22,width/2,width-22]){
+   const g=newGame(width);g.player.x=playerX;g.elapsed=[2000,16000,31000][phase];g.lastSpawn=g.elapsed-2000;
+   advance(g,50,[family],level,motif,width);
+   const axis=family==='falling'?'x':'y',min=axis==='x'?22:215,max=axis==='x'?width-22:478;
+   const gaps=safeIntervals(g.shots,axis,min,max);
+   assert.ok(gaps.length>0,`${family} ${motif} must leave >=40px clear at width ${width}, phase ${phase}, level ${level}`);
+   const safeCenters=gaps.map(([a,b])=>(a+b)/2);
+   for(let p=min;p<=max;p+=5){
+     const distance=Math.min(...safeCenters.map(center=>Math.abs(center-p)));
+     assert.ok(distance<=g.shots[0].telegraph/1000*330,`${family} warning must let a player at ${p} reach a safe corridor`);
+   }
  }
+});
+
+test('overlapping sweeps and falling volleys preserve the same clear corridors',()=>{
+ for(const width of [MOBILE_WIDTH,900])for(const [family,motif] of [['falling','coin-rain'],['sweep','cell-bars']]){
+   const g=newGame(width);g.elapsed=31_000;g.lastSpawn=30_000;
+   for(let i=0;i<70;i++){
+     advance(g,50,[family],12,motif,width);
+     if(g.waves<2)continue;
+     const axis=family==='falling'?'x':'y',min=axis==='x'?22:215,max=axis==='x'?width-22:478;
+     assert.ok(safeIntervals(g.shots,axis,min,max).length>0,`${family} overlapping waves must not close every ${axis} corridor`);
+   }
+ }
+});
+
+test('warnings paint the full collision envelope instead of a misleading hairline',()=>{
+ const g=newGame(MOBILE_WIDTH);g.elapsed=31_000;g.lastSpawn=30_000;
+ advance(g,50,['falling'],1,'coin-rain',MOBILE_WIDTH);
+ g.shots.push({x:-25,y:235,vx:300,vy:0,r:21,kind:'sweep',motif:'cell-bars',age:20,telegraph:650,dodged:false});
+ const fills=[];const ctx=new Proxy({canvas:{width:MOBILE_WIDTH,height:500},createLinearGradient:()=>({addColorStop:()=>{}})},
+  {get(target,key){return key in target?target[key]:(...args)=>{if(key==='fillRect')fills.push(args);};},set(target,key,value){target[key]=value;return true;}});
+ drawGame(ctx,g,null,'Light Magenta','Yellow Aura',true);
+ const first=g.shots[0],danger=first.r+14;
+ assert.ok(fills.some(([x,y,w,h])=>x===first.x-danger&&y===205&&w===danger*2&&h===295),'falling warning covers shot and player radii');
+ assert.ok(fills.some(([x,y,w,h])=>x===0&&y===200&&w===MOBILE_WIDTH&&h===70),'sweep warning covers shot and player radii');
+});
+
+test('standing still is not an automatic win against falling or sweep bosses',()=>{
+ for(const width of [MOBILE_WIDTH,900])for(const level of [1,12])for(const [family,motif] of [
+  ['falling',''],['falling','coin-rain'],['sweep',''],['sweep','cell-bars']
+ ]){
+   const g=newGame(width);
+   for(let i=0;i<900&&!g.done;i++)advance(g,50,[family],level,motif,width);
+   assert.equal(g.won,false,`${family} ${motif} on width ${width} level ${level} must require a dodge`);
+   assert.ok(g.hits>0,`${family} ${motif} should threaten the starting position`);
+ }
+});
+
+test('former parking spots lose even with observed trait-family rotations',()=>{
+ const rotations=[['falling','sweep'],['falling','sweep','pulse'],['sweep','falling','orbit']];
+ for(const width of [MOBILE_WIDTH,900])for(const level of [1,12])for(const families of rotations){
+   for(const x of [22,width/2-55,width/2,width/2+55,width-22])for(const y of [215,275,295,355,415,478]){
+     const g=newGame(width);g.player={x,y};g.idleAnchor={x,y};
+     for(let i=0;i<900&&!g.done;i++)advance(g,50,families,level,'',width);
+     assert.equal(g.won,false,`static park at (${x},${y}) must not clear ${families} on width ${width}, level ${level}`);
+   }
+ }
+});
+
+test('an idle warning locks onto a position and a clear sidestep avoids it',()=>{
+ const g=newGame(MOBILE_WIDTH);g.lastSpawn=Infinity;
+ for(let i=0;i<75;i++)advance(g,50,['falling'],1,'',MOBILE_WIDTH);
+ const shot=g.shots.find(s=>s.pressure);
+ assert.ok(shot,'an idle player gets an aimed pressure warning');
+ assert.equal(shot.telegraph,950);
+ assert.deepEqual(shot.aim,g.player);
+ g.target={x:g.player.x+55,y:g.player.y+55};
+ for(let i=0;i<60;i++)advance(g,50,['falling'],1,'',MOBILE_WIDTH);
+ assert.equal(g.hp,STARTING_HEALTH,'moving well within the warning clears the aimed pressure shot');
 });
 
 test('surviving the full active round ends the game',()=>{
@@ -102,7 +175,7 @@ test('featured trait signatures change attack geometry, timing, and symbols',()=
  assert.equal(coin.lastMotif,'coin-rain');
  assert.equal(cell.lastMotif,'cell-bars');
  assert.equal(rally.lastMotif,'rally-orbit');
- assert.equal(coin.shots.length,5);
+ assert.equal(coin.shots.length,3);
  assert.ok(new Set(coin.shots.map(s=>s.age)).size>1,'coin columns should cascade');
  assert.ok(cell.shots.some(s=>s.vx>0)&&cell.shots.some(s=>s.vx<0),'cell bars should enter from both sides');
  assert.equal(rally.shots.length,7);
@@ -145,6 +218,7 @@ test('opening attacks give a readable warning while later heat still ramps up',(
 
 test('near dodges restore one heart after ten and never exceed starting health',()=>{
  const g=newGame();g.hp=3;
+ g.move={x:1,y:0};advance(g,50,['pulse'],1);advance(g,50,['pulse'],1);g.move={x:0,y:0};
  for(let i=0;i<9;i++)g.shots.push({x:g.player.x+40,y:g.player.y,vx:0,vy:0,r:15,kind:'pulse',age:650,telegraph:650,dodged:false});
  advance(g,16,['pulse'],1);
  assert.equal(g.dodges,9);assert.equal(g.hp,3);
@@ -155,4 +229,11 @@ test('near dodges restore one heart after ten and never exceed starting health',
  g.shots.push({x:g.player.x+40,y:g.player.y,vx:0,vy:0,r:15,kind:'pulse',age:650,telegraph:650,dodged:false});
  advance(g,16,['pulse'],1);
  assert.equal(g.hp,STARTING_HEALTH);
+});
+
+test('standing beside projectiles gives no near-dodge points or healing',()=>{
+ const g=newGame();g.hp=3;g.lastSpawn=Infinity;
+ for(let i=0;i<20;i++)g.shots.push({x:g.player.x+40,y:g.player.y,vx:0,vy:0,r:15,kind:'pulse',age:650,telegraph:650,dodged:false});
+ advance(g,50,['pulse'],1);
+ assert.equal(g.dodges,0);assert.equal(g.hp,3);
 });

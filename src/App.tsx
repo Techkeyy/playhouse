@@ -11,7 +11,7 @@ const round=(n:number)=>Math.floor(n).toLocaleString();
 
 function Arena({chog,onFinish,onStarted}:{chog:Chog;onFinish:(g:GameState)=>void;onStarted:()=>void}){
  const worldWidth=useRef(window.matchMedia('(max-width: 720px) and (orientation: portrait)').matches?MOBILE_WIDTH:WIDTH).current;
- const canvas=useRef<HTMLCanvasElement>(null);const state=useRef(newGame(worldWidth));const image=useRef<HTMLImageElement|null>(null);const keys=useRef(new Set<string>());const callback=useRef(onFinish);const audioCount=useRef({waves:0,dodges:0,hits:0});const touchStart=useRef<{id:number;x:number;y:number;playerX:number;playerY:number}|null>(null);
+ const canvas=useRef<HTMLCanvasElement>(null);const state=useRef(newGame(worldWidth));const image=useRef<HTMLImageElement|null>(null);const keys=useRef(new Set<string>());const callback=useRef(onFinish);const audioCount=useRef({waves:0,dodges:0,hits:0,pressure:0});const touchStart=useRef<{id:number;x:number;y:number;playerX:number;playerY:number}|null>(null);
  const [hud,setHud]=useState({time:45,hp:STARTING_HEALTH,score:0,dodges:0});
  const [started,setStarted]=useState(false);
  const [arenaSound,setArenaSound]=useState(playhouseAudio.getSettings());
@@ -30,9 +30,10 @@ function Arena({chog,onFinish,onStarted}:{chog:Chog;onFinish:(g:GameState)=>void
      if(g.move.x||g.move.y)g.target=null;
      advance(g,dt,chog.bossProfile.attackFamilies,chog.stats.level,chog.bossProfile.signature?.id,worldWidth);drawGame(ctx,g,image.current,chog.bossProfile.arenaTheme,String(chog.traits.find(t=>t.trait_type.toLowerCase()==='aura')?.value||''),window.matchMedia('(prefers-reduced-motion: reduce)').matches,chog.bossProfile.signature?.id);
      if(g.waves>audioCount.current.waves)playhouseAudio.attack(g.lastFamily);
+     if(g.lastPressure>audioCount.current.pressure)playhouseAudio.attack('pulse');
      if(g.dodges>audioCount.current.dodges)playhouseAudio.dodge();
      if(g.hits>audioCount.current.hits)playhouseAudio.hit();
-     audioCount.current={waves:g.waves,dodges:g.dodges,hits:g.hits};
+     audioCount.current={waves:g.waves,dodges:g.dodges,hits:g.hits,pressure:g.lastPressure};
      if(now-lastHud>100){lastHud=now;setHud({time:Math.max(0,Math.ceil((ROUND_MS-g.elapsed)/1000)),hp:g.hp,score:g.score,dodges:g.dodges});}
      if(g.done){playhouseAudio.stopAmbient();g.won?playhouseAudio.win():playhouseAudio.lose();callback.current({...g});return;}raf=requestAnimationFrame(tick);
    };raf=requestAnimationFrame(tick);
@@ -49,11 +50,11 @@ function Arena({chog,onFinish,onStarted}:{chog:Chog;onFinish:(g:GameState)=>void
  const releaseDirection=(key:string)=>(e:React.PointerEvent<HTMLButtonElement>)=>{e.preventDefault();keys.current.delete(key);};
  return <section className={`fight${started?' is-active':''}${worldWidth===MOBILE_WIDTH?' mobile-play':''}`} aria-label={`Fight ${chog.name}`}>
    <div className="fight-head"><div><span className="eyebrow">LIVE ROUND</span><h2>{chog.name}</h2><p>{chog.bossProfile.title} · {chog.bossProfile.arenaTheme} arena</p></div><div className="hud"><span><b>{hud.time}</b> SEC</span><span><b>{'♥'.repeat(Math.max(0,hud.hp))}{'♡'.repeat(STARTING_HEALTH-Math.max(0,hud.hp))}</b> HEALTH</span><span><b>{round(hud.score)}</b> SCORE</span></div></div>
-   <div className="fight-guide" aria-label="How to play"><span><strong>Move:</strong> arrows or WASD</span><span><strong>Touch:</strong> drag in the arena</span><span><strong>Dodge:</strong> warning shapes show where attacks will land</span><span><strong>Goal:</strong> survive 45 seconds; every 10 near dodges restore one heart</span></div>
+   <div className="fight-guide" aria-label="How to play"><span><strong>Move:</strong> arrows or WASD</span><span><strong>Touch:</strong> drag in the arena</span><span><strong>Dodge:</strong> shaded warnings mark danger; MOVE marks an aimed shot if you stay still</span><span><strong>Goal:</strong> survive 45 seconds; 10 near dodges while moving restore one heart</span></div>
    {!started&&<div className="fight-ready" role="status"><p>Ready to face {chog.name}? Move into the open space after each warning. Your 45 seconds begin when you press Start.</p><button type="button" className="primary" onClick={startRound}>Start 45-second round →</button></div>}
    <canvas ref={canvas} width={worldWidth} height={HEIGHT} onPointerDown={e=>{if(!started)return;e.currentTarget.setPointerCapture(e.pointerId);pointer(e);}} onPointerMove={e=>{if(started&&(e.buttons||touchStart.current?.id===e.pointerId))pointer(e);}} onPointerUp={releasePointer} onPointerCancel={releasePointer} aria-label="Battle arena. Use arrow keys, WASD, or drag to dodge incoming attacks."/>
    {started&&<div className="touch-controls" aria-label="Touch movement controls"><div className="touch-controls-head"><span>Hold to move</span><button type="button" className="fight-sound" onClick={()=>playhouseAudio.toggleMuted()} aria-label={arenaSound.muted?'Unmute sound':'Mute sound'}><SoundIcon muted={arenaSound.muted} size={17}/>{arenaSound.muted?'Sound off':'Sound on'}</button></div><div className="touch-directions">{([['←','arrowleft','Move left'],['↑','arrowup','Move up'],['↓','arrowdown','Move down'],['→','arrowright','Move right']] as const).map(([symbol,key,label])=><button type="button" key={key} aria-label={label} onPointerDown={holdDirection(key)} onPointerUp={releaseDirection(key)} onPointerCancel={releaseDirection(key)} onLostPointerCapture={releaseDirection(key)}>{symbol}</button>)}</div></div>}
-   <div className="arena-foot"><span>Survive 45 seconds. Follow the warning lines, then dodge the attacks. Every 10 near dodges restore one heart. On a phone, drag in the arena or hold the movement buttons below.</span><span>Near dodges: {hud.dodges}</span></div>
+   <div className="arena-foot"><span>Survive 45 seconds. Follow the shaded warnings and keep moving; the MOVE marker targets a player who stays still. Every 10 near dodges while moving restore one heart. On a phone, drag in the arena or hold the movement buttons below.</span><span>Near dodges: {hud.dodges}</span></div>
  </section>;
 }
 export default function App(){

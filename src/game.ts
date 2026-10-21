@@ -2,9 +2,9 @@ export const WIDTH=900, MOBILE_WIDTH=450, HEIGHT=500, ROUND_MS=45_000, STARTING_
 const HIT_GRACE_MS=1700, HIT_FLASH_MS=520;
 type Vec={x:number;y:number};
 export type AttackFamily='pulse'|'falling'|'sweep'|'orbit';
-type Shot=Vec & {vx:number;vy:number;r:number;kind:AttackFamily;motif:string;age:number;telegraph:number;dodged:boolean};
-export type GameState={elapsed:number;player:Vec;hp:number;score:number;hits:number;dodges:number;shots:Shot[];lastSpawn:number;waves:number;lastFamily:AttackFamily;lastMotif:string;invulnerable:number;done:boolean;won:boolean;move:Vec;target:Vec|null};
-export function newGame(width=WIDTH):GameState{return {elapsed:0,player:{x:width/2,y:410},hp:STARTING_HEALTH,score:0,hits:0,dodges:0,shots:[],lastSpawn:0,waves:0,lastFamily:'pulse',lastMotif:'',invulnerable:0,done:false,won:false,move:{x:0,y:0},target:null};}
+type Shot=Vec & {vx:number;vy:number;r:number;kind:AttackFamily;motif:string;age:number;telegraph:number;dodged:boolean;pressure?:boolean;aim?:Vec;expired?:boolean};
+export type GameState={elapsed:number;player:Vec;hp:number;score:number;hits:number;dodges:number;shots:Shot[];lastSpawn:number;waves:number;lastFamily:AttackFamily;lastMotif:string;invulnerable:number;done:boolean;won:boolean;move:Vec;target:Vec|null;idleAnchor:Vec;idleMs:number;lastMoved:number;lastPressure:number};
+export function newGame(width=WIDTH):GameState{return {elapsed:0,player:{x:width/2,y:355},hp:STARTING_HEALTH,score:0,hits:0,dodges:0,shots:[],lastSpawn:0,waves:0,lastFamily:'pulse',lastMotif:'',invulnerable:0,done:false,won:false,move:{x:0,y:0},target:null,idleAnchor:{x:width/2,y:355},idleMs:0,lastMoved:-Infinity,lastPressure:0};}
 const clamp=(n:number,a:number,b:number)=>Math.max(a,Math.min(b,n));
 const dist=(a:Vec,b:Vec)=>Math.hypot(a.x-b.x,a.y-b.y);
 export const heatPhase=(elapsed:number)=>elapsed>=30_000?2:elapsed>=15_000?1:0;
@@ -22,6 +22,8 @@ export function advance(g:GameState,dtMs:number,families:string[],level:number,s
  const dy=g.target?g.target.y-g.player.y:g.move.y;
  const len=Math.hypot(dx,dy);
  if(len>0.01){const speed=g.target?Math.min(330,len/dt):330;g.player.x=clamp(g.player.x+dx/len*speed*dt,22,width-22);g.player.y=clamp(g.player.y+dy/len*speed*dt,215,HEIGHT-22);}
+ if(dist(g.player,g.idleAnchor)>20){g.idleAnchor={...g.player};g.idleMs=0;g.lastMoved=g.elapsed;}
+ else g.idleMs+=dt*1000;
  const phase=heatPhase(g.elapsed),cadence=spawnCadence(g.elapsed,level);
  if(g.elapsed-g.lastSpawn>cadence){
    g.lastSpawn=g.elapsed;const count=g.waves;const family=(families[g.waves%Math.max(families.length,1)]||'pulse') as AttackFamily;g.waves++;
@@ -32,15 +34,36 @@ export function advance(g:GameState,dtMs:number,families:string[],level:number,s
    const telegraph=[820,750,650][phase];
    const emit=(x:number,y:number,vx:number,vy:number,r:number,kind:AttackFamily,delayMs=0)=>g.shots.push({x,y,vx,vy,r,kind,motif,age:-delayMs,telegraph,dodged:false});
    if(family==='falling'){
-     const x=clamp(g.player.x,45,width-45);const cascade=['coin-rain','token-rain','gold-rain','trait-rain'].includes(motif);const offsets=cascade?[-136,-68,0,68,136]:phase===0?[-100,0,100]:phase===1?[-140,-70,0,70,140]:[-175,-105,-35,35,105,175];
-     offsets.forEach((offset,i)=>emit(clamp(x+offset*Math.max(1,width/WIDTH),25,width-25),attackY,0,speed,phase===2?16:15,'falling',cascade?i*75:0));
+     // Keep generous horizontal escape corridors on both arena widths. The
+     // positions remain aligned across overlapping volleys, so a later wave
+     // cannot silently fill the only gap left by an earlier one.
+     const cascade=['coin-rain','token-rain','gold-rain','trait-rain'].includes(motif);
+     const columnCount=Math.max(3,2*Math.floor((width-200)/220)+1);
+     const middle=(columnCount-1)/2,step=110;
+     for(let i=0;i<columnCount;i++){
+       if(phase===0&&i%2!==middle%2)continue;
+       if(phase===1&&i!==middle&&i%4===0)continue;
+       emit(width/2+(i-middle)*step,attackY,0,speed,phase===2?16:15,'falling',cascade?i*75:0);
+     }
    }else if(family==='sweep'){
-     const fromLeft=count%2===0;const lanes=phase===2?5:4;const alternating=['cell-bars','frost-sweep','stripe-sweep','body-sweep'].includes(motif);for(let i=0;i<lanes;i++){const left=alternating?i%2===0:fromLeft;emit(left?-25:width+25,215+i*(phase===2?62:78),left?speed*1.2:-speed*1.2,0,alternating?21:17,'sweep',alternating?i*65:0);}
+     // A sweep needs an actual 50px-wide passage after accounting for the
+     // player's 14px collision radius. Reuse rows across phases and volleys.
+     const fromLeft=count%2===0;const rows=phase===0?[235,355]:[235,355,475];const alternating=['cell-bars','frost-sweep','stripe-sweep','body-sweep'].includes(motif);
+     rows.forEach((y,i)=>{const left=alternating?i%2===0:fromLeft;emit(left?-25:width+25,y,left?speed*1.2:-speed*1.2,0,alternating?21:17,'sweep',alternating?i*65:0);});
    }else if(family==='orbit'){
      const base=count*1.13,n=(motif?7:5)+phase*2;for(let i=0;i<n;i++){const a=base+i*Math.PI*2/n;emit(bossX,attackY,Math.cos(a)*speed*.84,Math.sin(a)*speed*.84,12,'orbit',motif?i*55:0);}
    }else{
      const aim=Math.atan2(g.player.y-attackY,g.player.x-bossX),n=5+phase*2;for(let i=0;i<n;i++){const a=aim+(i-(n-1)/2)*(.72/(n-1));emit(bossX,attackY,Math.cos(a)*speed,Math.sin(a)*speed,12,'pulse');}
    }
+ }
+ // Independent, small aimed pressure prevents permanent parking in the
+ // generous falling/sweep corridors without adding another arena-wide wall.
+ // The marker records a point in time: sidestepping during its warning works.
+ if(g.idleMs>=2200&&g.elapsed-g.lastPressure>=3600){
+   g.lastPressure=g.elapsed;
+   const aim={...g.player},origin={x:width/2+Math.sin(g.elapsed/1000*2.1)*19,y:185};
+   const distance=Math.max(1,dist(origin,aim)),speed=240+phase*15;
+   g.shots.push({x:origin.x,y:origin.y,vx:(aim.x-origin.x)/distance*speed,vy:(aim.y-origin.y)/distance*speed,r:8,kind:'pulse',motif:'pressure',age:0,telegraph:950,dodged:false,pressure:true,aim});
  }
  for(const shot of g.shots){
    shot.age+=dt*1000;
@@ -48,9 +71,10 @@ export function advance(g:GameState,dtMs:number,families:string[],level:number,s
    shot.x+=shot.vx*dt;shot.y+=shot.vy*dt;
    const gap=dist(shot,g.player);
    if(gap<shot.r+14&&g.invulnerable===0){g.hp--;g.hits++;g.invulnerable=HIT_GRACE_MS;shot.y=HEIGHT+100;}
-   else if(!shot.dodged&&gap<shot.r+35&&gap>=shot.r+14){shot.dodged=true;g.dodges++;g.score+=15;if(g.dodges%10===0)g.hp=Math.min(STARTING_HEALTH,g.hp+1);}
+   else if(!shot.dodged&&gap<shot.r+35&&gap>=shot.r+14&&g.invulnerable===0&&g.elapsed-g.lastMoved<=1000){shot.dodged=true;g.dodges++;g.score+=15;if(g.dodges%10===0)g.hp=Math.min(STARTING_HEALTH,g.hp+1);}
+   if(shot.pressure&&shot.aim&&(shot.x-shot.aim.x)*shot.vx+(shot.y-shot.aim.y)*shot.vy>0)shot.expired=true;
  }
- g.shots=g.shots.filter(s=>s.x>-60&&s.x<width+60&&s.y<HEIGHT+60);
+ g.shots=g.shots.filter(s=>!s.expired&&s.x>-60&&s.x<width+60&&s.y<HEIGHT+60);
  g.score+=Math.round(dt*100);
  if(g.hp<=0||g.elapsed>=ROUND_MS){g.done=true;g.won=g.hp>0&&g.elapsed>=ROUND_MS;g.score+=g.won?500:0;}
  return g;
@@ -92,9 +116,17 @@ export function drawGame(ctx:CanvasRenderingContext2D,g:GameState,boss:HTMLImage
  else{ctx.fillStyle='#21314b';ctx.fillRect(-69,-69,138,138);ctx.fillStyle='#fff';ctx.textAlign='center';ctx.font='bold 23px system-ui';ctx.fillText('CHOG',0,7);}
  ctx.strokeStyle='#fff2bb';ctx.lineWidth=4;ctx.strokeRect(-73,-73,146,146);ctx.restore();
  ctx.textAlign='left';ctx.font='bold 13px system-ui';ctx.fillStyle='#f8d777';ctx.fillText(`HEAT ${heatPhase(g.elapsed)+1}/3`,20,29);ctx.fillStyle='#d8ebf5';ctx.fillText(g.lastFamily.toUpperCase(),20,51);ctx.font='bold 12px system-ui';ctx.fillText((g.lastMotif||signatureId).replaceAll('-',' ').toUpperCase(),20,72);
- for(const s of g.shots){if(s.age<s.telegraph){const alpha=.2+.5*Math.max(0,s.age)/s.telegraph;const tellHue=['coin-rain','token-rain','gold-rain'].includes(s.motif)?45:s.motif==='frost-sweep'?190:s.motif==='stripe-sweep'?150:s.kind==='sweep'?18:s.kind==='orbit'?275:45;ctx.strokeStyle=`hsla(${tellHue},90%,73%,${alpha})`;ctx.lineWidth=s.kind==='sweep'?4:3;if(['cell-bars','frost-sweep','stripe-sweep','body-sweep'].includes(s.motif)){ctx.fillStyle=`hsla(${tellHue},90%,65%,${alpha*.12})`;ctx.fillRect(0,s.y-12,width,24);}ctx.setLineDash([9,7]);ctx.beginPath();ctx.moveTo(s.x,s.y);
+ for(const s of g.shots){if(s.age<s.telegraph){const alpha=.2+.5*Math.max(0,s.age)/s.telegraph;const tellHue=['coin-rain','token-rain','gold-rain'].includes(s.motif)?45:s.motif==='frost-sweep'?190:s.motif==='stripe-sweep'?150:s.kind==='sweep'?18:s.kind==='orbit'?275:45;ctx.strokeStyle=`hsla(${tellHue},90%,73%,${alpha})`;ctx.lineWidth=s.kind==='sweep'?4:3;
+     // Show the whole player-center danger envelope, including the player's
+     // collision radius, so a thin warning line never suggests a false gap.
+     const danger=s.r+14;ctx.fillStyle=`hsla(${tellHue},90%,65%,${alpha*.22})`;
+     if(s.kind==='falling')ctx.fillRect(s.x-danger,205,danger*2,HEIGHT-205);
+     if(s.kind==='sweep')ctx.fillRect(0,s.y-danger,width,danger*2);
+     if(s.pressure&&s.aim){ctx.strokeStyle=`rgba(255,215,105,${alpha})`;ctx.lineWidth=3;ctx.beginPath();ctx.arc(s.aim.x,s.aim.y,s.r+14,0,Math.PI*2);ctx.stroke();ctx.fillStyle='#ffdc84';ctx.textAlign='center';ctx.font='bold 14px system-ui';ctx.fillText('MOVE!',s.aim.x,Math.max(218,s.aim.y-31));}
+     ctx.setLineDash([9,7]);ctx.beginPath();ctx.moveTo(s.x,s.y);
      if(s.kind==='falling')ctx.lineTo(s.x,HEIGHT);
      else if(s.kind==='sweep')ctx.lineTo(s.vx>0?width:0,s.y);
+     else if(s.pressure&&s.aim)ctx.lineTo(s.aim.x,s.aim.y);
      else {const endY=s.vy>0?HEIGHT:0,scale=(endY-s.y)/(Math.abs(s.vy)<1?1:s.vy);ctx.lineTo(s.x+s.vx*scale,endY);}
      ctx.stroke();ctx.setLineDash([]);continue;}
    ctx.save();ctx.shadowBlur=18;
